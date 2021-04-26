@@ -247,17 +247,31 @@ stages:
         strategy:
           maxParallel: 3
           matrix:
-            bffnsimplehostbotdotnet: {}
-            bffnsimplehostbotdotnet21: {}
-            bffnechoskillbotdotnet: {}
-            bffnechoskillbotdotnet21: {}
-            bffnechoskillbotdotnetv3: {}
-            bffnwaterfallhostbotdotnet: {}
-            bffnwaterfallskillbotdotnet: {}
-            bffnsimplehostbotcomposerdotnet: {}
-            bffnechoskillbotcomposerdotnet: {}
+            bffnsimplehostbotdotnet: {bot:"bffnsimplehostbotdotnet"}
+            bffnsimplehostbotdotnet21: {bot:"bffnsimplehostbotdotnet21"}
+            bffnechoskillbotdotnet: {bot:"bffnechoskillbotdotnet"}
+            bffnechoskillbotdotnet21: {bot:"bffnechoskillbotdotnet21"}
+            bffnechoskillbotdotnetv3: {bot:"bffnechoskillbotdotnetv3"}
+            bffnwaterfallhostbotdotnet: {bot:"bffnwaterfallhostbotdotnet"}
+            bffnwaterfallskillbotdotnet: {bot:"bffnwaterfallskillbotdotnet"}
+            bffnsimplehostbotcomposerdotnet: {bot:"bffnsimplehostbotcomposerdotnet"}
+            bffnechoskillbotcomposerdotnet: {bot:"bffnechoskillbotcomposerdotnet"}
         steps: 
-          - powershell: echo "test"
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Artifact'
+            inputs:
+              artifact: 'dotnet-$(Build.BuildId)'
+              path: '$(System.DefaultWorkingDirectory)/DotNet-Bots/'
+
+          # Deploy bot
+          - task: AzureWebApp@1
+            displayName: 'Deploy Azure Web App'
+            inputs:
+              azureSubscription: "$(AzureSubscription)"
+              appName: '$(bot)$(InternalResourceSuffix)-$(Build.BuildId)'
+              resourceGroupName: '$(InternalResourceGroupName)-DotNet'
+              package: '$(System.DefaultWorkingDirectory)/DotNet-Bots/$(bot).zip'
+              deploymentMethod: runFromPackage
 
 # JS
   - template: js/deploy.yml

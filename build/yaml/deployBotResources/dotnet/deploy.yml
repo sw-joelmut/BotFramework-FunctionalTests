@@ -27,203 +27,192 @@ stages:
             SolutionDir: "$(Build.SourcesDirectory)/Bots/DotNet/"
         displayName: "Deploy steps"
         steps:
-          - powershell: echo "test"
-          # # Delete Bot Resources
-          # - template: ../common/deleteResources.yml
-          #   parameters:
-          #     azureSubscription: "${{ parameters.azureSubscription }}"
-          #     resourceGroup: "${{ parameters.resourceGroup }}"
-          #     resourceName: "${{ bot.name }}"
-          #     resourceSuffix: "${{ parameters.resourceSuffix }}"
+          # Delete Bot Resources
+          - template: ../common/deleteResources.yml
+            parameters:
+              azureSubscription: "${{ parameters.azureSubscription }}"
+              resourceGroup: "${{ parameters.resourceGroup }}"
+              resourceName: "${{ bot.name }}"
+              resourceSuffix: "${{ parameters.resourceSuffix }}"
 
-          # # Gets Bot App Registration credentials from KeyVault or Pipeline Variables
-          # - template: ../common/getAppRegistration.yml
-          #   parameters:
-          #     appId: ${{ bot.appId }}
-          #     appSecret: ${{ bot.appSecret }}
-          #     azureSubscription: "${{ parameters.azureSubscription }}"
-          #     botName: "${{ bot.name }}"
-          #     keyVault: "${{ parameters.keyVault }}"
+          # Gets Bot App Registration credentials from KeyVault or Pipeline Variables
+          - template: ../common/getAppRegistration.yml
+            parameters:
+              appId: ${{ bot.appId }}
+              appSecret: ${{ bot.appSecret }}
+              azureSubscription: "${{ parameters.azureSubscription }}"
+              botName: "${{ bot.name }}"
+              keyVault: "${{ parameters.keyVault }}"
 
-          # # Use Net Core version
-          # - ${{ if ne(bot.project.netCoreVersion, '') }}:
-          #   - task: UseDotNet@2
-          #     displayName: "Use NetCore v${{ bot.project.netCoreVersion }}"
-          #     inputs:
-          #       version: ${{ bot.project.netCoreVersion }}
+          # Use Net Core version
+          - ${{ if ne(bot.project.netCoreVersion, '') }}:
+            - task: UseDotNet@2
+              displayName: "Use NetCore v${{ bot.project.netCoreVersion }}"
+              inputs:
+                version: ${{ bot.project.netCoreVersion }}
 
-          # # Use NuGet
-          # - task: NuGetToolInstaller@1
-          #   displayName: "Use NuGet"
+          # Use NuGet
+          - task: NuGetToolInstaller@1
+            displayName: "Use NuGet"
           
-          # # Prepare appsettings.json file, deleting all the declared skills, so it uses only the settings define in Azure
-          # - ${{ if eq(bot.type, 'Host') }}:
-          #   - task: PowerShell@2
-          #     displayName: 'Prepare App Settings'
-          #     inputs:
-          #       targetType: inline
-          #       workingDirectory: '$(System.DefaultWorkingDirectory)/${{ bot.project.directory }}'
-          #       failOnStderr: true
-          #       script: |
-          #         $file = "./appsettings.json"
-          #         $content = Get-Content -Raw $file | ConvertFrom-Json
-          #         $content.BotFrameworkSkills = @()
-          #         $content | ConvertTo-Json | Set-Content $file
+          # Prepare appsettings.json file, deleting all the declared skills, so it uses only the settings define in Azure
+          - ${{ if eq(bot.type, 'Host') }}:
+            - task: PowerShell@2
+              displayName: 'Prepare App Settings'
+              inputs:
+                targetType: inline
+                workingDirectory: '$(System.DefaultWorkingDirectory)/${{ bot.project.directory }}'
+                failOnStderr: true
+                script: |
+                  $file = "./appsettings.json"
+                  $content = Get-Content -Raw $file | ConvertFrom-Json
+                  $content.BotFrameworkSkills = @()
+                  $content | ConvertTo-Json | Set-Content $file
 
-          # # Run NuGet restore SkillV3
-          # - ${{ if eq(bot.type, 'SkillV3') }}:
-          #   - task: NuGetCommand@2
-          #     displayName: "NuGet restore"
-          #     inputs:
-          #       restoreSolution: "${{ bot.project.directory }}/${{ bot.project.name }}"
-          #       restoreDirectory: "$(SolutionDir)packages"
+          # Run NuGet restore SkillV3
+          - ${{ if eq(bot.type, 'SkillV3') }}:
+            - task: NuGetCommand@2
+              displayName: "NuGet restore"
+              inputs:
+                restoreSolution: "${{ bot.project.directory }}/${{ bot.project.name }}"
+                restoreDirectory: "$(SolutionDir)packages"
 
-          # # Evaluate dependencies source and version
-          # - template: evaluateDependenciesVariables.yml
-          #   parameters:
-          #     botType: "${{ bot.type }}"
-          #     registry: "${{ bot.dependenciesRegistry }}"
-          #     version: "${{ bot.dependenciesVersion }}"
+          # Evaluate dependencies source and version
+          - template: evaluateDependenciesVariables.yml
+            parameters:
+              botType: "${{ bot.type }}"
+              registry: "${{ bot.dependenciesRegistry }}"
+              version: "${{ bot.dependenciesVersion }}"
 
-          # # Start of DotNet Install & Build
-          # - ${{ if in(bot.type, 'Host', 'Skill') }}:
-          #   # Install dependencies
-          #   - template: installDependencies.yml
-          #     parameters:
-          #       project: "${{ bot.project }}"
-          #       source: "$(DependenciesSource)"
-          #       version: "$(DependenciesVersionNumber)"
-          #       packages:
-          #         Microsoft.Bot.Builder.Dialogs 
-          #         Microsoft.Bot.Builder.Integration.AspNet.Core
+          # Start of DotNet Install & Build
+          - ${{ if in(bot.type, 'Host', 'Skill') }}:
+            # Install dependencies
+            - template: installDependencies.yml
+              parameters:
+                project: "${{ bot.project }}"
+                source: "$(DependenciesSource)"
+                version: "$(DependenciesVersionNumber)"
+                packages:
+                  Microsoft.Bot.Builder.Dialogs 
+                  Microsoft.Bot.Builder.Integration.AspNet.Core
 
-          #   # Build Bot
-          #   - task: DotNetCoreCLI@2
-          #     displayName: "Build"
-          #     inputs:
-          #       command: publish
-          #       publishWebProjects: false
-          #       projects: "${{ bot.project.directory }}/${{ bot.project.name }}"
-          #       arguments: "--output $(System.DefaultWorkingDirectory)/${{ parameters.buildPath }}/${{ bot.name }}"
-          #       modifyOutputPath: false
+            # Build Bot
+            - task: DotNetCoreCLI@2
+              displayName: "Build"
+              inputs:
+                command: publish
+                publishWebProjects: false
+                projects: "${{ bot.project.directory }}/${{ bot.project.name }}"
+                arguments: "--output $(System.DefaultWorkingDirectory)/${{ parameters.buildPath }}/${{ bot.name }}"
+                modifyOutputPath: false
 
-          #   # Get BotBuilder package version
-          #   - task: PowerShell@2
-          #     displayName: 'Get BotBuilder Version'
-          #     inputs:
-          #       targetType: inline
-          #       workingDirectory: '$(System.DefaultWorkingDirectory)/${{ bot.project.directory }}'
-          #       failOnStderr: true
-          #       script: |
-          #         [XML]$data = Get-Content "./${{ bot.project.name }}"
-          #         $package = $data.Project.ItemGroup.PackageReference | Where-Object { $_.Include -eq "Microsoft.Bot.Builder.Integration.AspNet.Core" }
-          #         Write-Host "##vso[task.setvariable variable=BotBuilderVersionNumber]$($package.version)"
+            # Get BotBuilder package version
+            - task: PowerShell@2
+              displayName: 'Get BotBuilder Version'
+              inputs:
+                targetType: inline
+                workingDirectory: '$(System.DefaultWorkingDirectory)/${{ bot.project.directory }}'
+                failOnStderr: true
+                script: |
+                  [XML]$data = Get-Content "./${{ bot.project.name }}"
+                  $package = $data.Project.ItemGroup.PackageReference | Where-Object { $_.Include -eq "Microsoft.Bot.Builder.Integration.AspNet.Core" }
+                  Write-Host "##vso[task.setvariable variable=BotBuilderVersionNumber]$($package.version)"
 
-          # # End of DotNet Install & Build
+          # End of DotNet Install & Build
 
-          # # Start DotNet v3 Install, Build
-          # - ${{ if eq(bot.type, 'SkillV3') }}:
-          #   # Install dependencies
-          #   - template: installDependenciesV3.yml
-          #     parameters:
-          #       source: "$(DependenciesSource)"
-          #       version: "$(DependenciesVersionNumber)"
-          #       project: "${{ bot.project }}"
-          #       packages:
-          #         Microsoft.Bot.Builder
-          #         Microsoft.Bot.Builder.Azure
-          #         Microsoft.Bot.Builder.History
+          # Start DotNet v3 Install, Build
+          - ${{ if eq(bot.type, 'SkillV3') }}:
+            # Install dependencies
+            - template: installDependenciesV3.yml
+              parameters:
+                source: "$(DependenciesSource)"
+                version: "$(DependenciesVersionNumber)"
+                project: "${{ bot.project }}"
+                packages:
+                  Microsoft.Bot.Builder
+                  Microsoft.Bot.Builder.Azure
+                  Microsoft.Bot.Builder.History
 
-          #   # Build bot
-          #   - task: MSBuild@1
-          #     displayName: "Build"
-          #     inputs:
-          #       solution: "${{ bot.project.directory }}/${{ bot.project.name }}"
-          #       vsVersion: 16.0
-          #       platform: "$(BuildPlatform)"
-          #       configuration: "$(BuildConfiguration)"
+            # Build bot
+            - task: MSBuild@1
+              displayName: "Build"
+              inputs:
+                solution: "${{ bot.project.directory }}/${{ bot.project.name }}"
+                vsVersion: 16.0
+                platform: "$(BuildPlatform)"
+                configuration: "$(BuildConfiguration)"
 
-          #   # Get BotBuilder version
-          #   - task: PowerShell@2
-          #     displayName: 'Get BotBuilder Version'
-          #     inputs:
-          #       targetType: inline
-          #       failOnStderr: true
-          #       script: |
-          #         $result = @(Get-ChildItem "$(SolutionDir)packages\Microsoft.Bot.Builder.[0-9]*" -directory | Sort LastWriteTime -Descending)
-          #         $version = $result[0].Name.Replace("Microsoft.Bot.Builder.", "")
-          #         Write-Host "##vso[task.setvariable variable=BotBuilderVersionNumber]$($version)"
+            # Get BotBuilder version
+            - task: PowerShell@2
+              displayName: 'Get BotBuilder Version'
+              inputs:
+                targetType: inline
+                failOnStderr: true
+                script: |
+                  $result = @(Get-ChildItem "$(SolutionDir)packages\Microsoft.Bot.Builder.[0-9]*" -directory | Sort LastWriteTime -Descending)
+                  $version = $result[0].Name.Replace("Microsoft.Bot.Builder.", "")
+                  Write-Host "##vso[task.setvariable variable=BotBuilderVersionNumber]$($version)"
 
-          #   # Zip bot
-          #   - task: ArchiveFiles@2
-          #     displayName: 'Zip bot'
-          #     inputs:
-          #       rootFolderOrFile: '$(System.DefaultWorkingDirectory)/${{ bot.project.directory }}'
-          #       includeRootFolder: false
-          #       archiveType: 'zip'
-          #       archiveFile: '$(System.DefaultWorkingDirectory)/${{ parameters.buildPath }}/${{ bot.name }}/${{ bot.name }}.zip'
-          #       replaceExistingArchive: true
-          #       verbose: true
-          # # End of DotNet v3 Install, Build
+            # Zip bot
+            - task: ArchiveFiles@2
+              displayName: 'Zip bot'
+              inputs:
+                rootFolderOrFile: '$(System.DefaultWorkingDirectory)/${{ bot.project.directory }}'
+                includeRootFolder: false
+                archiveType: 'zip'
+                archiveFile: '$(System.DefaultWorkingDirectory)/${{ parameters.buildPath }}/${{ bot.name }}/${{ bot.name }}.zip'
+                replaceExistingArchive: true
+                verbose: true
+          # End of DotNet v3 Install, Build
 
-          # # Tag BotBuilder package version
-          # - template: ../common/tagBotBuilderVersion.yml
-          #   parameters:
-          #     ${{ if eq(bot.displayName, '') }}:
-          #       botName: "${{ bot.name }}"
-          #     ${{ if ne(bot.displayName, '') }}:
-          #       botName: "${{ bot.displayName }}"
-          #     version: "$(BotBuilderVersionNumber)"
+          # Tag BotBuilder package version
+          - template: ../common/tagBotBuilderVersion.yml
+            parameters:
+              ${{ if eq(bot.displayName, '') }}:
+                botName: "${{ bot.name }}"
+              ${{ if ne(bot.displayName, '') }}:
+                botName: "${{ bot.displayName }}"
+              version: "$(BotBuilderVersionNumber)"
 
-          # # Upload zip to artifacts in case we want to debug it
-          # - task: PublishBuildArtifacts@1
-          #   displayName: 'Publish zip package'
-          #   inputs:
-          #     pathToPublish: '$(System.DefaultWorkingDirectory)/${{ parameters.buildPath }}/${{ bot.name }}/${{ bot.name }}.zip'
-          #     artifactName: dotnet-$(Build.BuildId)
+          # Upload zip to artifacts in case we want to debug it
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish zip package'
+            inputs:
+              pathToPublish: '$(System.DefaultWorkingDirectory)/${{ parameters.buildPath }}/${{ bot.name }}/${{ bot.name }}.zip'
+              artifactName: dotnet-$(Build.BuildId)
 
-          # # Create App Service and Bot Channel Registration
-          # - template: ../common/createAppService.yml
-          #   parameters:
-          #     appId: $(AppId)
-          #     appInsight: "${{ parameters.appInsight }}"
-          #     appSecret:  $(AppSecret)
-          #     appServicePlan: "${{ parameters.appServicePlan }}"
-          #     appServicePlanRG: "${{ parameters.appServicePlanRG }}"
-          #     azureSubscription: "${{ parameters.azureSubscription }}"
-          #     botGroup: "${{ parameters.resourceGroup }}"
-          #     botName: "${{ bot.name }}"
-          #     botPricingTier: "${{ parameters.botPricingTier }}"
-          #     resourceSuffix: "${{ parameters.resourceSuffix }}"
-          #     templateFile: "build/templates/template-bot-resources.json"
+          # Create App Service and Bot Channel Registration
+          - template: ../common/createAppService.yml
+            parameters:
+              appId: $(AppId)
+              appInsight: "${{ parameters.appInsight }}"
+              appSecret:  $(AppSecret)
+              appServicePlan: "${{ parameters.appServicePlan }}"
+              appServicePlanRG: "${{ parameters.appServicePlanRG }}"
+              azureSubscription: "${{ parameters.azureSubscription }}"
+              botGroup: "${{ parameters.resourceGroup }}"
+              botName: "${{ bot.name }}"
+              botPricingTier: "${{ parameters.botPricingTier }}"
+              resourceSuffix: "${{ parameters.resourceSuffix }}"
+              templateFile: "build/templates/template-bot-resources.json"
 
-          # # Deploy bot
-          # - task: AzureWebApp@1
-          #   displayName: 'Deploy Azure Web App : ${{ bot.name }}-$(Build.BuildId)'
-          #   inputs:
-          #     azureSubscription: "${{ parameters.azureSubscription }}"
-          #     appName: '${{ bot.name }}${{ parameters.resourceSuffix }}-$(Build.BuildId)'
-          #     resourceGroupName: '${{ parameters.resourceGroup }}'
-          #     package: '$(System.DefaultWorkingDirectory)/${{ parameters.buildPath }}/${{ bot.name }}/${{ bot.name }}.zip'
-          #     deploymentMethod: runFromPackage
+          # Configure OAuth
+          - ${{ if eq(bot.type, 'Skill') }}:
+            - template: ../common/configureOAuth.yml
+              parameters:
+                appId: $(AppId)
+                appSecret:  $(AppSecret)
+                azureSubscription: "${{ parameters.azureSubscription }}"
+                botGroup: "${{ parameters.resourceGroup }}"
+                botName: "${{ bot.name }}"
+                connectionName: "${{ parameters.connectionName }}"
+                resourceSuffix: "${{ parameters.resourceSuffix }}"
 
-          # # Configure OAuth
-          # - ${{ if eq(bot.type, 'Skill') }}:
-          #   - template: ../common/configureOAuth.yml
-          #     parameters:
-          #       appId: $(AppId)
-          #       appSecret:  $(AppSecret)
-          #       azureSubscription: "${{ parameters.azureSubscription }}"
-          #       botGroup: "${{ parameters.resourceGroup }}"
-          #       botName: "${{ bot.name }}"
-          #       connectionName: "${{ parameters.connectionName }}"
-          #       resourceSuffix: "${{ parameters.resourceSuffix }}"
-
-          # # Create DirectLine Channel Hosts
-          # - ${{ if eq(bot.type, 'Host') }}:
-          #   - template: ../common/createDirectLine.yml
-          #     parameters:
-          #       azureSubscription: "${{ parameters.azureSubscription }}"
-          #       botGroup: "${{ parameters.resourceGroup }}"
-          #       botName: "${{ bot.name }}"
-          #       resourceSuffix: "${{ parameters.resourceSuffix }}"
+          # Create DirectLine Channel Hosts
+          - ${{ if eq(bot.type, 'Host') }}:
+            - template: ../common/createDirectLine.yml
+              parameters:
+                azureSubscription: "${{ parameters.azureSubscription }}"
+                botGroup: "${{ parameters.resourceGroup }}"
+                botName: "${{ bot.name }}"
+                resourceSuffix: "${{ parameters.resourceSuffix }}"
