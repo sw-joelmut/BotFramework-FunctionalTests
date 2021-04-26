@@ -230,34 +230,34 @@ stages:
           dependenciesRegistry: "$($env:DependenciesRegistrySkills)"
           dependenciesVersion: "$($env:DependenciesVersionSkills)"
 
-- stage: Deploy
-  dependsOn: [
-    Deploy_bffnsimplehostbotdotnet,
-    Deploy_bffnsimplehostbotdotnet21,
-    Deploy_bffnechoskillbotdotnet,
-    Deploy_bffnechoskillbotdotnet21,
-    Deploy_bffnechoskillbotdotnetv3,
-    Deploy_bffnwaterfallhostbotdotnet,
-    Deploy_bffnwaterfallskillbotdotnet,
-    Deploy_bffnsimplehostbotcomposerdotnet,
-    Deploy_bffnechoskillbotcomposerdotnet
-  ]
-  jobs:
-    - job: Test
-      strategy:
-        maxParallel: 3
-        matrix:
-          bffnsimplehostbotdotnet: {}
-          bffnsimplehostbotdotnet21: {}
-          bffnechoskillbotdotnet: {}
-          bffnechoskillbotdotnet21: {}
-          bffnechoskillbotdotnetv3: {}
-          bffnwaterfallhostbotdotnet: {}
-          bffnwaterfallskillbotdotnet: {}
-          bffnsimplehostbotcomposerdotnet: {}
-          bffnechoskillbotcomposerdotnet: {}
-      steps: 
-        - powershell: echo "test"
+  - stage: Deploy
+    dependsOn: [
+      Deploy_bffnsimplehostbotdotnet,
+      Deploy_bffnsimplehostbotdotnet21,
+      Deploy_bffnechoskillbotdotnet,
+      Deploy_bffnechoskillbotdotnet21,
+      Deploy_bffnechoskillbotdotnetv3,
+      Deploy_bffnwaterfallhostbotdotnet,
+      Deploy_bffnwaterfallskillbotdotnet,
+      Deploy_bffnsimplehostbotcomposerdotnet,
+      Deploy_bffnechoskillbotcomposerdotnet
+    ]
+    jobs:
+      - job: Test
+        strategy:
+          maxParallel: 3
+          matrix:
+            bffnsimplehostbotdotnet: {}
+            bffnsimplehostbotdotnet21: {}
+            bffnechoskillbotdotnet: {}
+            bffnechoskillbotdotnet21: {}
+            bffnechoskillbotdotnetv3: {}
+            bffnwaterfallhostbotdotnet: {}
+            bffnwaterfallskillbotdotnet: {}
+            bffnsimplehostbotcomposerdotnet: {}
+            bffnechoskillbotcomposerdotnet: {}
+        steps: 
+          - powershell: echo "test"
 
 # JS
   - template: js/deploy.yml
