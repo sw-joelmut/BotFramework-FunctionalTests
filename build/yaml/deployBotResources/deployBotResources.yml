@@ -247,15 +247,24 @@ stages:
         strategy:
           maxParallel: 3
           matrix:
-            bffnsimplehostbotdotnet: {bot:"bffnsimplehostbotdotnet"}
-            bffnsimplehostbotdotnet21: {bot:"bffnsimplehostbotdotnet21"}
-            bffnechoskillbotdotnet: {bot:"bffnechoskillbotdotnet"}
-            bffnechoskillbotdotnet21: {bot:"bffnechoskillbotdotnet21"}
-            bffnechoskillbotdotnetv3: {bot:"bffnechoskillbotdotnetv3"}
-            bffnwaterfallhostbotdotnet: {bot:"bffnwaterfallhostbotdotnet"}
-            bffnwaterfallskillbotdotnet: {bot:"bffnwaterfallskillbotdotnet"}
-            bffnsimplehostbotcomposerdotnet: {bot:"bffnsimplehostbotcomposerdotnet"}
-            bffnechoskillbotcomposerdotnet: {bot:"bffnechoskillbotcomposerdotnet"}
+            bffnsimplehostbotdotnet: 
+              bot: "bffnsimplehostbotdotnet"
+            bffnsimplehostbotdotnet21: 
+              bot: "bffnsimplehostbotdotnet21"
+            bffnechoskillbotdotnet: 
+              bot: "bffnechoskillbotdotnet"
+            bffnechoskillbotdotnet21: 
+              bot: "bffnechoskillbotdotnet21"
+            bffnechoskillbotdotnetv3: 
+              bot: "bffnechoskillbotdotnetv3"
+            bffnwaterfallhostbotdotnet: 
+              bot: "bffnwaterfallhostbotdotnet"
+            bffnwaterfallskillbotdotnet: 
+              bot: "bffnwaterfallskillbotdotnet"
+            bffnsimplehostbotcomposerdotnet: 
+              bot: "bffnsimplehostbotcomposerdotnet"
+            bffnechoskillbotcomposerdotnet: 
+              bot: "bffnechoskillbotcomposerdotnet"
         steps: 
           - task: DownloadPipelineArtifact@2
             displayName: 'Download Artifact'
@@ -265,7 +274,7 @@ stages:
 
           # Deploy bot
           - task: AzureWebApp@1
-            displayName: 'Deploy Azure Web App'
+            displayName: 'Deploy Azure Web App $(bot)$(InternalResourceSuffix)-$(Build.BuildId)'
             inputs:
               azureSubscription: "$(AzureSubscription)"
               appName: '$(bot)$(InternalResourceSuffix)-$(Build.BuildId)'
