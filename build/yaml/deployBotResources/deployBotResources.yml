@@ -247,15 +247,15 @@ stages:
       strategy:
         maxParallel: 3
         matrix:
-          bffnsimplehostbotdotnet: bffnsimplehostbotdotnet
-          bffnsimplehostbotdotnet21: bffnsimplehostbotdotnet21
-          bffnechoskillbotdotnet: bffnechoskillbotdotnet
-          bffnechoskillbotdotnet21: bffnechoskillbotdotnet21
-          bffnechoskillbotdotnetv3: bffnechoskillbotdotnetv3
-          bffnwaterfallhostbotdotnet: bffnwaterfallhostbotdotnet
-          bffnwaterfallskillbotdotnet: bffnwaterfallskillbotdotnet
-          bffnsimplehostbotcomposerdotnet: bffnsimplehostbotcomposerdotnet
-          bffnechoskillbotcomposerdotnet: bffnechoskillbotcomposerdotnet
+          bffnsimplehostbotdotnet: {}
+          bffnsimplehostbotdotnet21: {}
+          bffnechoskillbotdotnet: {}
+          bffnechoskillbotdotnet21: {}
+          bffnechoskillbotdotnetv3: {}
+          bffnwaterfallhostbotdotnet: {}
+          bffnwaterfallskillbotdotnet: {}
+          bffnsimplehostbotcomposerdotnet: {}
+          bffnechoskillbotcomposerdotnet: {}
       steps: 
         - powershell: echo "test"
 
