@@ -218,15 +218,15 @@ stages:
               resourceSuffix: "${{ parameters.resourceSuffix }}"
               templateFile: "build/templates/template-bot-resources.json"
 
-          # Deploy bot
-          - task: AzureWebApp@1
-            displayName: 'Deploy Azure Web App : ${{ bot.name }}-$(Build.BuildId)'
-            inputs:
-              azureSubscription: "${{ parameters.azureSubscription }}"
-              appName: '${{ bot.name }}${{ parameters.resourceSuffix }}-$(Build.BuildId)'
-              resourceGroupName: '${{ parameters.resourceGroup }}'
-              package: '$(System.DefaultWorkingDirectory)/${{ parameters.buildPath }}/${{ bot.name }}.zip'
-              deploymentMethod: runFromPackage
+          # # Deploy bot
+          # - task: AzureWebApp@1
+          #   displayName: 'Deploy Azure Web App : ${{ bot.name }}-$(Build.BuildId)'
+          #   inputs:
+          #     azureSubscription: "${{ parameters.azureSubscription }}"
+          #     appName: '${{ bot.name }}${{ parameters.resourceSuffix }}-$(Build.BuildId)'
+          #     resourceGroupName: '${{ parameters.resourceGroup }}'
+          #     package: '$(System.DefaultWorkingDirectory)/${{ parameters.buildPath }}/${{ bot.name }}.zip'
+          #     deploymentMethod: runFromPackage
 
           # Create DirectLine Channel Hosts
           - ${{ if eq(bot.type, 'Host') }}:
