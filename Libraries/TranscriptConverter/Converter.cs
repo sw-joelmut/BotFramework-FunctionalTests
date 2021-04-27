@@ -148,6 +148,20 @@ namespace TranscriptConverter
         }
 
         /// <summary>
+        /// Checks if a string is a Base64 value.
+        /// </summary>
+        /// <param name="base64">The string to check.</param>
+        /// <returns>True if the string is a Base64, otherwise, returns false.</returns>
+        private static bool IsBase64(string base64)
+        {
+            var base64Match = Regex.Match(
+                base64,
+                @"^data:.*;base64,",
+                RegexOptions.IgnoreCase);
+            return base64Match.Success;
+        }
+
+        /// <summary>
         /// Checks if a string is a GUID value.
         /// </summary>
         /// <param name="guid">The string to check.</param>
@@ -235,7 +249,13 @@ namespace TranscriptConverter
                     return false;
                 }
 
-                return string.IsNullOrEmpty(value) || IsGuid(value) || IsDateTime(value) || IsId(value) || IsUrl(value) || IsChannelId(value);
+                return string.IsNullOrEmpty(value)
+                    || IsDateTime(value)
+                    || IsUrl(value)
+                    || IsBase64(value)
+                    || IsGuid(value)
+                    || IsId(value)
+                    || IsChannelId(value);
             });
 
             return token.ToString();
