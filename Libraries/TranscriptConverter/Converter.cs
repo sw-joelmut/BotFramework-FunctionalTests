@@ -148,15 +148,15 @@ namespace TranscriptConverter
         }
 
         /// <summary>
-        /// Checks if a string is a Base64 value.
+        /// Checks if a string is a Base64 image.
         /// </summary>
         /// <param name="base64">The string to check.</param>
-        /// <returns>True if the string is a Base64, otherwise, returns false.</returns>
-        private static bool IsBase64(string base64)
+        /// <returns>True if the string is a Base64 image, otherwise, returns false.</returns>
+        private static bool IsBase64Image(string base64)
         {
             var base64Match = Regex.Match(
                 base64,
-                @"^data:.*;base64,",
+                @"^data:image\/png;base64,",
                 RegexOptions.IgnoreCase);
             return base64Match.Success;
         }
@@ -252,7 +252,7 @@ namespace TranscriptConverter
                 return string.IsNullOrEmpty(value)
                     || IsDateTime(value)
                     || IsUrl(value)
-                    || IsBase64(value)
+                    || IsBase64Image(value)
                     || IsGuid(value)
                     || IsId(value)
                     || IsChannelId(value);
