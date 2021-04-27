@@ -22,7 +22,7 @@ namespace TranscriptConverter
         public static TestScript ConvertTranscript(string transcriptPath)
         {
             using var reader = new StreamReader(Path.GetFullPath(transcriptPath));
-            
+
             var transcript = reader.ReadToEnd();
 
             var cleanedTranscript = RemoveUndesiredFields(transcript);
@@ -170,21 +170,21 @@ namespace TranscriptConverter
         {
             var idMatch = Regex.Match(
                 id,
-                @"([a-z0-9]{23})",
+                @"^(?!=)[a-z0-9]{23}",
                 RegexOptions.IgnoreCase);
             return idMatch.Success;
         }
 
         /// <summary>
-        /// Checks if a string is a service url value.
+        /// Checks if a string is an url value.
         /// </summary>
         /// <param name="url">The string to check.</param>
         /// <returns>True if the string is an url, otherwise, returns false.</returns>
-        private static bool IsServiceUrl(string url)
+        private static bool IsUrl(string url)
         {
             var idMatch = Regex.Match(
                 url,
-                @"https://([a-z0-9]{12})",
+                @"^[a-z]*:\/\/",
                 RegexOptions.IgnoreCase);
             return idMatch.Success;
         }
@@ -208,8 +208,8 @@ namespace TranscriptConverter
         {
             try
             {
-                JsonConvert.DeserializeObject(value);
-                return true;
+                JToken json = JsonConvert.DeserializeObject<JToken>(value);
+                return json != null && (json.Type == JTokenType.Object || json.Type == JTokenType.Array);
             }
             catch (JsonException)
             {
@@ -235,7 +235,7 @@ namespace TranscriptConverter
                     return false;
                 }
 
-                return IsGuid(value) || IsDateTime(value) || IsId(value) || IsServiceUrl(value) || IsChannelId(value);
+                return string.IsNullOrEmpty(value) || IsGuid(value) || IsDateTime(value) || IsId(value) || IsUrl(value) || IsChannelId(value);
             });
 
             return token.ToString();
