@@ -16,8 +16,9 @@ variables:
   # AzureSubscription: Service Connection Name to Manage Azure resources.
   # AppServicePlanGroup: (optional) Name of the Resource Group where the Windows App Service Plan is located.
   # AppServicePlanGroupLinux: (optional) Name of the Resource Group where the Linux App Service Plan is located.
-  # AppServicePlanName: (optional) Name of the Windows App Service Plan.
-  # AppServicePlanNameLinux: (optional) Name of the Linux App Service Plan.
+  # AppServicePlanDotNetName: (optional) Name of the DotNet App Service Plan.
+  # AppServicePlanJSName: (optional) Name of the JavaScript App Service Plan.
+  # AppServicePlanPythonName: (optional) Name of the Python App Service Plan.
   # BotPricingTier: (optional) Pricing Tier for the bots, default F0.
   # ResourceGroup: (optional) Name of the Resource Group where the bots will be deployed.
   # ResourceSuffix: (optional) Suffix to add to the resources' name to avoid collitions.
@@ -81,10 +82,11 @@ variables:
 
   ## Internal variables
   InternalAppInsightsName: 'bffnappinsights$(InternalResourceSuffix)'
-  InternalAppServicePlanLinuxName: $[coalesce(variables['AppServicePlanNameLinux'], 'bffnbotsappservicelinux$(InternalResourceSuffix)')]
-  InternalAppServicePlanLinuxResourceGroup: $[coalesce(variables['AppServicePlanGroupLinux'], 'bffnshared-linux')]
-  InternalAppServicePlanWindowsName: $[coalesce(variables['AppServicePlanName'], 'bffnbotsappservicewin$(InternalResourceSuffix)')]
   InternalAppServicePlanWindowsResourceGroup: $[coalesce(variables['AppServicePlanGroup'], 'bffnshared')]
+  InternalAppServicePlanLinuxResourceGroup: $[coalesce(variables['AppServicePlanGroupLinux'], 'bffnshared-linux')]
+  InternalAppServicePlanDotNetName: $[coalesce(variables['AppServicePlanDotNetName'], 'bffnbotsappservicedotnet$(InternalResourceSuffix)')]
+  InternalAppServicePlanJSName: $[coalesce(variables['AppServicePlanJSName'], 'bffnbotsappservicejs$(InternalResourceSuffix)')]
+  InternalAppServicePlanPythonName: $[coalesce(variables['AppServicePlanPythonName'], 'bffnbotsappservicepython$(InternalResourceSuffix)')]
   InternalKeyVaultName: 'bffnbotkeyvault$(InternalResourceSuffix)'
   InternalResourceGroupName: $[coalesce(variables['ResourceGroup'], 'bffnbots')]
   InternalResourceSuffix: $[coalesce(variables['ResourceSuffix'], '')]
@@ -112,7 +114,7 @@ stages:
   - template: dotnet/deploy.yml
     parameters:
       appInsight: "$(InternalAppInsightsName)"
-      appServicePlan: "$(InternalAppServicePlanWindowsName)"
+      appServicePlan: "$(InternalAppServicePlanDotNetName)"
       appServicePlanRG: "$(InternalAppServicePlanWindowsResourceGroup)"
       azureSubscription: "$(AzureSubscription)"
       botPricingTier: $env:BotPricingTier
@@ -216,7 +218,7 @@ stages:
   - template: dotnet/deployComposer.yml
     parameters:
       appInsight: "$(InternalAppInsightsName)"
-      appServicePlan: "$(InternalAppServicePlanWindowsName)"
+      appServicePlan: "$(InternalAppServicePlanDotNetName)"
       appServicePlanRG: "$(InternalAppServicePlanWindowsResourceGroup)"
       azureSubscription: "$(AzureSubscription)"
       botPricingTier: $env:BotPricingTier
@@ -253,7 +255,7 @@ stages:
   - template: js/deploy.yml
     parameters:
       appInsight: "$(InternalAppInsightsName)"
-      appServicePlan: "$(InternalAppServicePlanWindowsName)"
+      appServicePlan: "$(InternalAppServicePlanJSName)"
       appServicePlanRG: "$(InternalAppServicePlanWindowsResourceGroup)"
       azureSubscription: "$(AzureSubscription)"
       botPricingTier: $env:BotPricingTier
@@ -321,7 +323,7 @@ stages:
 # Python
   - template: python/deploy.yml
     parameters:
-      appServicePlan: "$(InternalAppServicePlanLinuxName)"
+      appServicePlan: "$(InternalAppServicePlanPythonName)"
       appServicePlanRG: "$(InternalAppServicePlanLinuxResourceGroup)"
       azureSubscription: "$(AzureSubscription)"
       botPricingTier: $env:BOTPRICINGTIER
