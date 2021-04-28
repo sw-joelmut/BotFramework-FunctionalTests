@@ -15,11 +15,12 @@ variables:
 
   ## Internal variables
   InternalAppInsightsName: "bffnappinsights$($env:ResourceSuffix)"
-  InternalAppServicePlanLinuxName: "bffnbotsappservicelinux$($env:ResourceSuffix)"
-  InternalAppServicePlanWindowsName: "bffnbotsappservicewin$($env:ResourceSuffix)"
+  InternalAppServicePlanDotNetName: "bffnbotsappservicedotnet$($env:ResourceSuffix)"
+  InternalAppServicePlanJSName: "bffnbotsappservicejs$($env:ResourceSuffix)"
+  InternalAppServicePlanPythonName: "bffnbotsappservicepython$($env:ResourceSuffix)"
+  InternalBotResourceGroupName: $[coalesce(variables['DeployResourceGroup'], 'bffnbots')]
   InternalCosmosDBName: "bffnbotstatedb$($env:ResourceSuffix)"
   InternalKeyVaultName: "bffnbotkeyvault$($env:ResourceSuffix)"
-  InternalBotResourceGroupName: $[coalesce(variables['DeployResourceGroup'], 'bffnbots')]
   InternalSharedResourceGroupName: $[coalesce(variables['SharedResourceGroup'], 'bffnshared')]
 
 pool:
@@ -48,31 +49,6 @@ stages:
           parameters:
             name: "$(InternalBotResourceGroupName)-JS"
 
-- stage: "Delete_App_Service_Plan_Windows"
-  displayName: "Delete App Service Plan (Windows)"
-  dependsOn: 
-    - Delete_DotNet_Resource_Group
-    - Delete_JS_Resource_Group
-  jobs:
-    - job: "Delete"
-      displayName: "Delete steps"
-      steps:
-        - task: AzureCLI@2
-          displayName: "Delete App Service Plan (Windows)"
-          inputs:
-            azureSubscription: $(AzureSubscription)
-            scriptType: pscore
-            scriptLocation: inlineScript
-            inlineScript: |
-              Write-Host "Looking for $(InternalAppServicePlanWindowsName)..."
-              $exists = az appservice plan show --name "$(InternalAppServicePlanWindowsName)" --resource-group "$(InternalSharedResourceGroupName)"
-              if ($exists) {
-                Write-Host "Deleting $(InternalAppServicePlanWindowsName)..."
-                az appservice plan delete --name "$(InternalAppServicePlanWindowsName)" --resource-group "$(InternalSharedResourceGroupName)" --yes
-              } else {
-                Write-Host "No pre-existing $(InternalAppServicePlanWindowsName) resource found."
-              }
-
 - stage: "Delete_Python_Resource_Group"
   displayName: "Delete Python's Resource Group"
   dependsOn: []
@@ -84,8 +60,56 @@ stages:
           parameters:
             name: "$(InternalBotResourceGroupName)-Python"
 
-- stage: "Delete_App_Service_Plan_Linux"
-  displayName: "Delete App Service Plan (Linux)"
+- stage: "Delete_App_Service_Plan_DotNet"
+  displayName: "Delete App Service Plan (DotNet)"
+  dependsOn: 
+    - Delete_DotNet_Resource_Group
+  jobs:
+    - job: "Delete"
+      displayName: "Delete steps"
+      steps:
+        - task: AzureCLI@2
+          displayName: "Delete App Service Plan (DotNet)"
+          inputs:
+            azureSubscription: $(AzureSubscription)
+            scriptType: pscore
+            scriptLocation: inlineScript
+            inlineScript: |
+              Write-Host "Looking for $(InternalAppServicePlanDotNetName)..."
+              $exists = az appservice plan show --name "$(InternalAppServicePlanDotNetName)" --resource-group "$(InternalSharedResourceGroupName)"
+              if ($exists) {
+                Write-Host "Deleting $(InternalAppServicePlanDotNetName)..."
+                az appservice plan delete --name "$(InternalAppServicePlanDotNetName)" --resource-group "$(InternalSharedResourceGroupName)" --yes
+              } else {
+                Write-Host "No pre-existing $(InternalAppServicePlanDotNetName) resource found."
+              }
+
+- stage: "Delete_App_Service_Plan_JS"
+  displayName: "Delete App Service Plan (JS)"
+  dependsOn: 
+    - Delete_JS_Resource_Group
+  jobs:
+    - job: "Delete"
+      displayName: "Delete steps"
+      steps:
+        - task: AzureCLI@2
+          displayName: "Delete App Service Plan (JS)"
+          inputs:
+            azureSubscription: $(AzureSubscription)
+            scriptType: pscore
+            scriptLocation: inlineScript
+            inlineScript: |
+              Write-Host "Looking for $(InternalAppServicePlanJSName)..."
+              $exists = az appservice plan show --name "$(InternalAppServicePlanJSName)" --resource-group "$(InternalSharedResourceGroupName)"
+              if ($exists) {
+                Write-Host "Deleting $(InternalAppServicePlanJSName)..."
+                az appservice plan delete --name "$(InternalAppServicePlanJSName)" --resource-group "$(InternalSharedResourceGroupName)" --yes
+              } else {
+                Write-Host "No pre-existing $(InternalAppServicePlanJSName) resource found."
+              }
+
+- stage: "Delete_App_Service_Plan_Python"
+  displayName: "Delete App Service Plan (Python)"
   dependsOn:
     - Delete_Python_Resource_Group
   jobs:
@@ -93,19 +117,19 @@ stages:
       displayName: "Delete steps"
       steps:
         - task: AzureCLI@2
-          displayName: "Delete App Service Plan (Linux)"
+          displayName: "Delete App Service Plan (Python)"
           inputs:
             azureSubscription: $(AzureSubscription)
             scriptType: pscore
             scriptLocation: inlineScript
             inlineScript: |
-              Write-Host "Looking for $(InternalAppServicePlanLinuxName)..."
-              $exists = az appservice plan show --name "$(InternalAppServicePlanLinuxName)" --resource-group "$(InternalSharedResourceGroupName)-linux"
+              Write-Host "Looking for $(InternalAppServicePlanPythonName)..."
+              $exists = az appservice plan show --name "$(InternalAppServicePlanPythonName)" --resource-group "$(InternalSharedResourceGroupName)-linux"
               if ($exists) {
-                Write-Host "Deleting $(InternalAppServicePlanLinuxName)..."
-                az appservice plan delete --name "$(InternalAppServicePlanLinuxName)" --resource-group "$(InternalSharedResourceGroupName)-linux" --yes
+                Write-Host "Deleting $(InternalAppServicePlanPythonName)..."
+                az appservice plan delete --name "$(InternalAppServicePlanPythonName)" --resource-group "$(InternalSharedResourceGroupName)-linux" --yes
               } else {
-                Write-Host "No pre-existing $(InternalAppServicePlanLinuxName) resource found."
+                Write-Host "No pre-existing $(InternalAppServicePlanPythonName) resource found."
               }
 
 - stage: "Delete_App_Insights"
@@ -203,7 +227,8 @@ stages:
   dependsOn: 
     - Delete_DotNet_Resource_Group
     - Delete_JS_Resource_Group
-    - Delete_App_Service_Plan_Windows
+    - Delete_App_Service_Plan_DotNet
+    - Delete_App_Service_Plan_JS
     - Delete_App_Insights
     - Delete_CosmosDB
     - Delete_App_Registrations
@@ -220,7 +245,7 @@ stages:
   displayName: "Delete Resource Group (Linux)"
   dependsOn: 
     - Delete_Python_Resource_Group
-    - Delete_App_Service_Plan_Linux
+    - Delete_App_Service_Plan_Python
   jobs:
     - job: "Delete"
       displayName: "Delete Resource Group (Linux)"
