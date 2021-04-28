@@ -107,7 +107,7 @@ stages:
 
 - stage: Create_App_Service_Plan_DotNet
   displayName: "Create App Service Plan (DotNet)"
-  dependsOn: Create_Resource_Group_DotNet
+  dependsOn: Create_Resource_Group_Windows
   jobs:
     - job: Deploy_App_Service_Plan_DotNet
       displayName: "Deploy steps"
@@ -124,7 +124,7 @@ stages:
 
 - stage: Create_App_Service_Plan_JS
   displayName: "Create App Service Plan (JS)"
-  dependsOn: Create_Resource_Group_JS
+  dependsOn: Create_Resource_Group_Windows
   jobs:
     - job: Deploy_App_Service_Plan_JS
       displayName: "Deploy steps"
@@ -141,7 +141,7 @@ stages:
 
 - stage: Create_App_Service_Plan_Python
   displayName: "Create App Service Plan (Python)"
-  dependsOn: Create_Resource_Group_Python
+  dependsOn: Create_Resource_Group_Linux
   jobs:
     - job: Deploy_App_Service_Plan_Python
       displayName: "Deploy steps"
