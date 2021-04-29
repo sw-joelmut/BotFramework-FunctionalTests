@@ -22,9 +22,9 @@ parameters:
   displayName: Build Configuration
   type: string
 
-- name: deploymentResourceSuffix
-  displayName: Deployment Resource Suffix
-  type: string
+# - name: deploymentResourceSuffix
+#   displayName: Deployment Resource Suffix
+#   type: string
 
 - name: keyVault
   displayName: KeyVault name
