@@ -169,7 +169,7 @@ stages:
             displayName: 'Publish zip package'
             inputs:
               pathToPublish: '$(SYSTEM.DEFAULTWORKINGDIRECTORY)/build/${{ bot.name }}.zip'
-              artifactName: javascript-${{ parameters.resourceSuffix }}
+              artifactName: javascript${{ parameters.resourceSuffix }}
 
           # Create App Service and Bot Channel Registration
           - template: ../common/createAppService.yml

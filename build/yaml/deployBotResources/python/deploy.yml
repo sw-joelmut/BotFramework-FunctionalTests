@@ -160,11 +160,11 @@ stages:
             displayName: "Publish zip package"
             inputs:
               pathToPublish: "$(SYSTEM.DEFAULTWORKINGDIRECTORY)/build/${{ bot.name }}.zip"
-              artifactName: python-${{ parameters.resourceSuffix }}
+              artifactName: python${{ parameters.resourceSuffix }}
             
           # Deploy bot
           - task: AzureWebApp@1
-            displayName: "Deploy Azure Web App : ${{ bot.name }}-${{ parameters.resourceSuffix }}"
+            displayName: "Deploy Azure Web App : ${{ bot.name }}${{ parameters.resourceSuffix }}"
             inputs:
               azureSubscription: "${{ parameters.azureSubscription }}"
               appName: "${{ bot.name }}${{ parameters.resourceSuffix }}"

@@ -22,10 +22,6 @@ parameters:
   displayName: Build Configuration
   type: string
 
-# - name: deploymentResourceSuffix
-#   displayName: Deployment Resource Suffix
-#   type: string
-
 - name: keyVault
   displayName: KeyVault name
   type: string
@@ -58,7 +54,7 @@ stages:
                 azureSubscription: "${{ parameters.azureSubscription }}"
                 keyVault: "${{ parameters.keyVault }}"
                 resourceGroup: "${{ parameters.resourceGroup }}"
-                resourceSuffix: "$(ProcessedResourceSuffix)"
+                resourceSuffix: "${{ parameters.resourceSuffix }}"
                 scenario: "${{ scenario.name }}"
 
             - task: UseDotNet@2
