@@ -178,7 +178,7 @@ variables:
   InternalAppServicePlanWindowsResourceGroup: $[coalesce(variables['APPSERVICEPLANGROUP'], 'bffnshared')]
   InternalKeyVaultName: 'bffnbotkeyvault$(INTERNALRESOURCESUFFIX)'
   InternalResourceGroupName: $[coalesce(variables['RESOURCEGROUP'], 'bffnbots')]
-  InternalResourceSuffix: $[coalesce(variables['RESOURCESUFFIX'], '')]
+  InternalResourceSuffix: $[coalesce(variables['RESOURCESUFFIX'], '-$(BUILD.BUILDID)', '')]
 
 
 stages:
@@ -476,7 +476,7 @@ stages:
         steps:
           - powershell: |
               $variables = @{
-                deploymentBuildSuffix = "$(BUILD.BUILDID)"
+                deploymentBuildSuffix = "$(INTERNALRESOURCESUFFIX)"
               }
               Write-Host $variables
               New-Item -Path "$(SYSTEM.DEFAULTWORKINGDIRECTORY)" -Name "variables" -ItemType "directory"
