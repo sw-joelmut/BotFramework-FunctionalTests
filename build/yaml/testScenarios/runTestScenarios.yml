@@ -62,7 +62,9 @@ stages:
 
           - powershell: |
               $deploymentSuffix = (Get-Content -Path "$(SYSTEM.DEFAULTWORKINGDIRECTORY)/Variables/variables.json" | ConvertFrom-Json).deploymentSuffix
-              if (-not $deploymentSuffix) { $deploymentSuffix = $(BUILD.BUILDID) }
+              Write-Host "1 $deploymentSuffix"
+              if (-not $deploymentSuffix) { $deploymentSuffix = $(INTERNALRESOURCESUFFIX) }
+              Write-Host "2 $deploymentSuffix"
               Write-Host "Deployment Suffix: " $deploymentSuffix
               Write-Host "##vso[task.setvariable variable=DeploymentSuffix;isOutput=true]-$deploymentSuffix"
             displayName: "Set variables"
