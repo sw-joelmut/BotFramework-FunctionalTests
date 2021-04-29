@@ -475,12 +475,12 @@ stages:
         displayName: "Publish Variables"
         steps:
           - powershell: |
-              Write-Host "Resource Suffix: '$(INTERNALRESOURCESUFFIX)'"
-
               $variables = @{
                 deploymentResourceSuffix = "$(INTERNALRESOURCESUFFIX)"
               }
-              Write-Host $variables
+              Write-Host "Saved Variables:"
+              $variables | Format-Table
+
               New-Item -Path "$(SYSTEM.DEFAULTWORKINGDIRECTORY)" -Name "variables" -ItemType "directory"
               $variables | ConvertTo-Json | Out-File "$(SYSTEM.DEFAULTWORKINGDIRECTORY)/Variables/variables.json"
             displayName: "Create Variables file"
