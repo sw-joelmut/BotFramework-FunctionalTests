@@ -42,6 +42,8 @@ steps:
       scriptType: pscore
       scriptLocation: inlineScript
       inlineScript: |
+        write-host "${{ parameters.resourceSuffix }}"
+
         # Type of setting to use for the AppSettings variables.
         $types = @{
           Appsettings = 0
