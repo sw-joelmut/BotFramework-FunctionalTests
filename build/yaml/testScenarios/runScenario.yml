@@ -54,7 +54,7 @@ stages:
                 azureSubscription: "${{ parameters.azureSubscription }}"
                 keyVault: "${{ parameters.keyVault }}"
                 resourceGroup: "${{ parameters.resourceGroup }}"
-                resourceSuffix: "${{ parameters.resourceSuffix }}"
+                resourceSuffix: "$(PROCESSEDRESOURCESUFFIX)"
                 scenario: "${{ scenario.name }}"
 
             - task: UseDotNet@2
