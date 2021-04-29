@@ -87,7 +87,7 @@ stages:
         WaterfallSkillBotPython: "$(BFFNWATERFALLSKILLBOTPYTHONAPPID)"
       azureSubscription: "$(AZURESUBSCRIPTION)"
       buildConfiguration: "$(BUILDCONFIGURATION)"
-      deploymentResourceSuffix: $[stageDependencies.Download_Variables.Download_Variables.outputs['Set_Variables.DeploymentResourceSuffix']]
+      deploymentResourceSuffix: stageDependencies.Download_Variables.Download_Variables.outputs['Set_Variables.DeploymentResourceSuffix']
       keyVault: "$(INTERNALKEYVAULTNAME)"
       resourceGroup: "$(INTERNALRESOURCEGROUPNAME)"
       resourceSuffix: "$(INTERNALRESOURCESUFFIX)"

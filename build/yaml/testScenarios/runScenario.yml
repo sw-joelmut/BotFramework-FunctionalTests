@@ -50,7 +50,7 @@ stages:
       jobs:
         - job: Test
           variables:
-            ResourceSuffix: $[coalesce(${{ parameters.deploymentResourceSuffix }}, ${{ parameters.resourceSuffix }})]
+            ResourceSuffix: $[coalesce(${{ parameters.deploymentResourceSuffix }}, '${{ parameters.resourceSuffix }}')]
           steps:
             - template: configureConsumers.yml
               parameters:
