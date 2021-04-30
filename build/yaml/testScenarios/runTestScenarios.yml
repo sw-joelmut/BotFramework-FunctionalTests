@@ -14,6 +14,7 @@ variables:
   # AzureSubscription: Service Connection Name to Manage Azure resources.
   # ResourceGroup: (optional) Name of the Resource Group where the bots are deployed.
   # ResourceSuffix: (optional) Suffix to add to the resources' name to avoid collitions.
+  # SharedResourceSuffix: (optional) Suffix from shared resources pipeline.
 
   ## Bots Configuration (Define these variables in Azure)
   # BffnEchoSkillBotComposerDotNetAppId: (optional) App Id for BffnEchoSkillBotComposerDotNet bot.
@@ -29,9 +30,10 @@ variables:
   # DeployBotResourcesGuid: (optional) Deploy Bot Resources pipeline GUID.
 
   ## Internal variables
-  InternalKeyVaultName: "bffnbotkeyvault$(INTERNALRESOURCESUFFIX)"
+  InternalKeyVaultName: "bffnbotkeyvault$(INTERNALSHAREDRESOURCESUFFIX)"
   InternalResourceGroupName: $[coalesce(variables['RESOURCEGROUP'], 'bffnbots')]
   InternalResourceSuffix: $[coalesce(variables['RESOURCESUFFIX'], '')]
+  InternalSharedResourceSuffix: $[coalesce(variables['SHAREDRESOURCESUFFIX'], '')]
 
 pool:
   vmImage: "windows-2019"
