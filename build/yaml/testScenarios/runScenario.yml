@@ -22,10 +22,6 @@ parameters:
   displayName: Build Configuration
   type: string
 
-- name: buildIdSuffix
-  displayName: Build Id Suffix
-  type: string
-
 - name: keyVault
   displayName: KeyVault name
   type: string
@@ -50,7 +46,7 @@ stages:
       jobs:
         - job: Test
           variables:
-            BuildIdSuffix: "${{ parameters.buildIdSuffix }}"
+            ProcessedResourceSuffix: "${{ parameters.resourceSuffix }}"
           steps:
             - template: configureConsumers.yml
               parameters:
@@ -58,7 +54,7 @@ stages:
                 azureSubscription: "${{ parameters.azureSubscription }}"
                 keyVault: "${{ parameters.keyVault }}"
                 resourceGroup: "${{ parameters.resourceGroup }}"
-                resourceSuffix: "${{ parameters.resourceSuffix }}$(BUILDIDSUFFIX)"
+                resourceSuffix: "$(PROCESSEDRESOURCESUFFIX)"
                 scenario: "${{ scenario.name }}"
 
             - task: UseDotNet@2

@@ -49,6 +49,12 @@ steps:
         $keyVault = "${{ parameters.keyVault }}";
         $suffix = "${{ parameters.resourceSuffix }}";
 
+        Write-Host "Scenario: $scenario";
+        Write-Host "Resource Group: $resourceGroup";
+        Write-Host "KeyVault: $keyVault";
+        Write-Host "Resource Suffix: $suffix";
+
+
         # Helper Functions.
 
         $noBotsFoundMessage = "No bots were found in the configuration.";
