@@ -211,7 +211,7 @@ stages:
             displayName: 'Publish zip package'
             inputs:
               pathToPublish: '$(SYSTEM.DEFAULTWORKINGDIRECTORY)/${{ parameters.buildFolder }}/${{ bot.name }}/${{ bot.name }}.zip'
-              artifactName: dotnet-$(BUILD.BUILDID)
+              artifactName: dotnet${{ parameters.resourceSuffix }}
 
           # Create App Service and Bot Channel Registration
           - template: ../common/createAppService.yml
@@ -230,10 +230,10 @@ stages:
 
           # Deploy bot
           - task: AzureWebApp@1
-            displayName: 'Deploy Azure Web App : ${{ bot.name }}-$(BUILD.BUILDID)'
+            displayName: 'Deploy Azure Web App : ${{ bot.name }}${{ parameters.resourceSuffix }}'
             inputs:
               azureSubscription: "${{ parameters.azureSubscription }}"
-              appName: '${{ bot.name }}${{ parameters.resourceSuffix }}-$(BUILD.BUILDID)'
+              appName: '${{ bot.name }}${{ parameters.resourceSuffix }}'
               resourceGroupName: '${{ parameters.resourceGroup }}'
               package: '$(SYSTEM.DEFAULTWORKINGDIRECTORY)/${{ parameters.buildFolder }}/${{ bot.name }}/${{ bot.name }}.zip'
               deploymentMethod: runFromPackage

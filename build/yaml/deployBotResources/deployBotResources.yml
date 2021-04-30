@@ -180,7 +180,7 @@ variables:
   InternalAppServicePlanPythonName: $[coalesce(variables['APPSERVICEPLANPYTHONNAME'], 'bffnbotsappservicepython$(INTERNALRESOURCESUFFIX)')]
   InternalKeyVaultName: 'bffnbotkeyvault$(INTERNALRESOURCESUFFIX)'
   InternalResourceGroupName: $[coalesce(variables['RESOURCEGROUP'], 'bffnbots')]
-  InternalResourceSuffix: $[coalesce(variables['RESOURCESUFFIX'], '')]
+  InternalResourceSuffix: $[coalesce(variables['RESOURCESUFFIX'], '-$(BUILD.BUILDID)')]
 
 
 stages:
@@ -485,9 +485,10 @@ stages:
         steps:
           - powershell: |
               $variables = @{
-                deploymentBuildSuffix = "$(BUILD.BUILDID)"
+                deploymentResourceSuffix = "$(INTERNALRESOURCESUFFIX)"
               }
-              Write-Host $variables
+              Write-Host "Saved Variables:"
+              $variables | Format-Table
               New-Item -Path "$(SYSTEM.DEFAULTWORKINGDIRECTORY)" -Name "variables" -ItemType "directory"
               $variables | ConvertTo-Json | Out-File "$(SYSTEM.DEFAULTWORKINGDIRECTORY)/Variables/variables.json"
             displayName: "Create Variables file"

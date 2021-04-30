@@ -28,11 +28,11 @@ steps:
             Write-Host "Found pre-existing resource group ${{ parameters.resourceGroup }}."
             Write-Host "Starting resource cleanup..."
 
-            Write-Host ("Deleting '" + "${{ parameters.resourceName }}${{ parameters.resourceSuffix }}-$(BUILD.BUILDID)" + "'...")
-            az webapp delete --name "${{ parameters.resourceName }}${{ parameters.resourceSuffix }}-$(BUILD.BUILDID)" --resource-group ${{ parameters.resourceGroup }} --keep-empty-plan
-            az bot delete --name "${{ parameters.resourceName }}${{ parameters.resourceSuffix }}-$(BUILD.BUILDID)" --resource-group ${{ parameters.resourceGroup }}
+            Write-Host ("Deleting '" + "${{ parameters.resourceName }}${{ parameters.resourceSuffix }}" + "'...")
+            az webapp delete --name "${{ parameters.resourceName }}${{ parameters.resourceSuffix }}" --resource-group ${{ parameters.resourceGroup }} --keep-empty-plan
+            az bot delete --name "${{ parameters.resourceName }}${{ parameters.resourceSuffix }}" --resource-group ${{ parameters.resourceGroup }}
 
-            Write-Host "Pre-existing bot resources for '${{ parameters.resourceName }}${{ parameters.resourceSuffix }}-$(BUILD.BUILDID)' deleted."
+            Write-Host "Pre-existing bot resources for '${{ parameters.resourceName }}${{ parameters.resourceSuffix }}' deleted."
         } else {
             Write-Host "Resource group not found."
             Write-Host "##vso[task.complete result=Failed;]"
