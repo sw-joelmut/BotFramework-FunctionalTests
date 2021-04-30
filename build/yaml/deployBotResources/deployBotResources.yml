@@ -131,6 +131,7 @@ variables:
   # BotPricingTier: (optional) Pricing Tier for the bots, default F0.
   # ResourceGroup: (optional) Name of the Resource Group where the bots will be deployed.
   # ResourceSuffix: (optional) Suffix to add to the resources' name to avoid collitions.
+  # SharedResourceSuffix: (optional) Suffix from shared resources pipeline.
 
   ## Bots Configuration (Define these variables in Azure)
   # BffnEchoSkillBotComposerDotNetAppId: (optional) App Id for BffnEchoSkillBotComposerDotNet bot.
@@ -181,7 +182,8 @@ variables:
   InternalKeyVaultName: 'bffnbotkeyvault$(INTERNALRESOURCESUFFIX)'
   InternalResourceGroupName: $[coalesce(variables['RESOURCEGROUP'], 'bffnbots')]
   InternalResourceSuffix: $[coalesce(variables['RESOURCESUFFIX'], '')]
-  InternalDefaultResourceSuffix: $[coalesce('$(INTERNALRESOURCESUFFIX)', '-$(BUILD.BUILDID)')]
+  InternalSharedResourceSuffix: $[coalesce(variables['SHAREDRESOURCESUFFIX'], '')]
+  InternalDefaultResourceSuffix: $[coalesce(variables['INTERNALRESOURCESUFFIX'], '-$(BUILD.BUILDID)')]
 
 
 stages:
