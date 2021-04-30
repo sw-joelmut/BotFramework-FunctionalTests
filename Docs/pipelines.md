@@ -31,7 +31,8 @@
 | **[BotName](#botnames) + AppId** | [App Registration Portal](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) | (optional) App ID to use. If not configured, will be retrieved from the key vault. |
 | **[BotName](#botnames) + AppSecret** | [App Registration Portal](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) | (optional) App Secret to use. If not configured, will be retrieved from the key vault. |
 | **BotPricingTier** | User | (optional) Pricing tier for the Web App resources. **Possible values are: F0 (default), S1.** |
-| **ResourceSuffix** | Create Shared Resources | (optional) Suffix to add to the resource names to avoid collisions. |
+| **ResourceSuffix** | User | (optional) Suffix to add to the resource names to avoid collisions. **Build.BuildId (default)** |
+| **SharedResourceSuffix** | Create Shared Resources | (optional) Suffix from Shared Resources Pipeline. |
 
 The following parameters will be displayed in the run pipeline blade.
 
@@ -55,7 +56,8 @@ The following parameters will be displayed in the run pipeline blade.
 | **AzureSubscription** | Azure DevOps | Name of the Azure Resource Manager Service Connection configured in the DevOps organization. Click [here](./addARMServiceConnection.md) to see how to set it up. |
 | **ResourceGroup** | User | Prefix of the resource groups where the bots are deployed. |
 | **[BotName](#botnames) + AppId** | [App Registration Portal](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) | (optional) App ID to use. If not configured, it will be retrieved from the key vault. |
-| **ResourceSuffix** | Create Shared Resources | (optional) Suffix added to the resource names. |
+| **ResourceSuffix** | Deploy Resources | (optional) Suffix added to the resource names. |
+| **SharedResourceSuffix** | Create Shared Resources | (optional) Suffix from Shared Resources Pipeline. |
 
 ## 04 - Cleanup Resources Pipeline
 
