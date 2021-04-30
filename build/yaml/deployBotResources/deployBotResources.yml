@@ -180,7 +180,8 @@ variables:
   InternalAppServicePlanPythonName: $[coalesce(variables['APPSERVICEPLANPYTHONNAME'], 'bffnbotsappservicepython$(INTERNALRESOURCESUFFIX)')]
   InternalKeyVaultName: 'bffnbotkeyvault$(INTERNALRESOURCESUFFIX)'
   InternalResourceGroupName: $[coalesce(variables['RESOURCEGROUP'], 'bffnbots')]
-  InternalResourceSuffix: $[coalesce(variables['RESOURCESUFFIX'], '-$(BUILD.BUILDID)')]
+  InternalResourceSuffix: $[coalesce(variables['RESOURCESUFFIX'], '')]
+  InternalDefaultResourceSuffix: $[coalesce('$(INTERNALRESOURCESUFFIX)', '-$(BUILD.BUILDID)')]
 
 
 stages:
@@ -212,7 +213,7 @@ stages:
       connectionName: $env:CONNECTIONNAME
       keyVault: "$(INTERNALKEYVAULTNAME)"
       resourceGroup: "$(INTERNALRESOURCEGROUPNAME)-DotNet"
-      resourceSuffix: $(INTERNALRESOURCESUFFIX)
+      resourceSuffix: $(INTERNALDEFAULTRESOURCESUFFIX)
       bots:
         - name: "bffnsimplehostbotdotnet"
           dependsOn: "Prepare_DotNetGroup"
@@ -321,7 +322,7 @@ stages:
       botPricingTier: $env:BOTPRICINGTIER
       keyVault: "$(INTERNALKEYVAULTNAME)"
       resourceGroup: "$(INTERNALRESOURCEGROUPNAME)-DotNet"
-      resourceSuffix: $(INTERNALRESOURCESUFFIX)
+      resourceSuffix: $(INTERNALDEFAULTRESOURCESUFFIX)
       bots:
         - name: "bffnsimplehostbotcomposerdotnet"
           dependsOn: "Deploy_bffnechoskillbotdotnetv3"
@@ -361,7 +362,7 @@ stages:
       dependsOn: "Prepare_JSGroup"
       keyVault: "$(INTERNALKEYVAULTNAME)"
       resourceGroup: "$(INTERNALRESOURCEGROUPNAME)-JS"
-      resourceSuffix: $(INTERNALRESOURCESUFFIX)
+      resourceSuffix: $(INTERNALDEFAULTRESOURCESUFFIX)
       bots:
         - name: "bffnsimplehostbotjs"
           type: "Host"
@@ -429,7 +430,7 @@ stages:
       dependsOn: "Prepare_PythonGroup"
       keyVault: "$(INTERNALKEYVAULTNAME)"
       resourceGroup: "$(INTERNALRESOURCEGROUPNAME)-Python"
-      resourceSuffix: "$(INTERNALRESOURCESUFFIX)"
+      resourceSuffix: "$(INTERNALDEFAULTRESOURCESUFFIX)"
       bots:
         - name: "bffnsimplehostbotpython"
           type: "Host"
@@ -485,7 +486,7 @@ stages:
         steps:
           - powershell: |
               $variables = @{
-                deploymentResourceSuffix = "$(INTERNALRESOURCESUFFIX)"
+                deploymentResourceSuffix = "$(INTERNALDEFAULTRESOURCESUFFIX)"
               }
               Write-Host "Saved Variables:"
               $variables | Format-Table
