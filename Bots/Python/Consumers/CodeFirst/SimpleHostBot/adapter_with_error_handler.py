@@ -16,7 +16,10 @@ from botbuilder.schema import ActivityTypes, Activity, InputHints
 from config import DefaultConfig, SkillConfiguration
 from bots.host_bot import ACTIVE_SKILL_PROPERTY_NAME
 
+import logging 
+from opencensus.ext.azure.log_exporter import AzureLogHandler
 
+logger = logging.getLogger(__name__)
 class AdapterWithErrorHandler(BotFrameworkAdapter):
     def __init__(
         self,
@@ -39,10 +42,17 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
 
         self.on_turn_error = self._handle_turn_error
 
+        logger.addHandler(AzureLogHandler(
+            connection_string=''
+        ))
+
     async def _handle_turn_error(self, turn_context: TurnContext, error: Exception):
+        logger.setLevel(logging.ERROR)
+
         # This check writes out errors to console log
         # NOTE: In production environment, you should consider logging this to Azure
         #       application insights.
+        logger.exception(f"\n [on_turn_error] unhandled error: {error}", error)
         print(f"\n [on_turn_error] unhandled error: {error}", file=sys.stderr)
         traceback.print_exc()
         await self._send_error_message(turn_context, error)
@@ -83,6 +93,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
                 value_type="https://www.botframework.com/schemas/error",
             )
         except Exception as exception:
+            logger.exception(f"\n Exception caught on _send_error_message : {exception}", exception)
             print(
                 f"\n Exception caught on _send_error_message : {exception}",
                 file=sys.stderr,

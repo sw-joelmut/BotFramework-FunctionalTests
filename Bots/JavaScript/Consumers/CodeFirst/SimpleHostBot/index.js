@@ -22,6 +22,7 @@ const { SkillsConfiguration } = require('./skillsConfiguration');
 const { SkillConversationIdFactory } = require('./skillConversationIdFactory');
 const { allowedSkillsClaimsValidator } = require('./authentication/allowedSkillsClaimsValidator');
 const { SetupDialog } = require('./dialogs/setupDialog');
+const { AzureLogger, setLogLevel } = require('@azure/logger');
 
 // Create adapter.
 // See https://aka.ms/about-bot-adapter to learn more about adapters.
@@ -33,9 +34,12 @@ const adapter = new BotFrameworkAdapter({
 
 // Catch-all for errors.
 adapter.onTurnError = async (context, error) => {
+  setLogLevel('error');
+
   // This check writes out errors to console log .vs. app insights.
   // NOTE: In production environment, you should consider logging this to Azure
   //       application insights.
+  AzureLogger.log(error, `\n [onTurnError] unhandled error: ${error.message}`);
   console.error(`\n [onTurnError] unhandled error: ${error}`);
 
   try {
@@ -62,6 +66,7 @@ adapter.onTurnError = async (context, error) => {
             'TurnError'
     );
   } catch (err) {
+    AzureLogger.log(err, `\n [onTurnError] Exception caught in onTurnError: ${err}`);
     console.error(`\n [onTurnError] Exception caught in onTurnError : ${err}`);
   }
 
