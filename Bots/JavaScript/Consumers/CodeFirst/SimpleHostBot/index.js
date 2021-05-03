@@ -39,7 +39,6 @@ adapter.onTurnError = async (context, error) => {
   // This check writes out errors to console log .vs. app insights.
   // NOTE: In production environment, you should consider logging this to Azure
   //       application insights.
-  AzureLogger.log(error, `\n [onTurnError] unhandled error: ${error.message}`);
   console.error(`\n [onTurnError] unhandled error: ${error}`);
 
   try {
@@ -66,7 +65,6 @@ adapter.onTurnError = async (context, error) => {
             'TurnError'
     );
   } catch (err) {
-    AzureLogger.log(err, `\n [onTurnError] Exception caught in onTurnError: ${err}`);
     console.error(`\n [onTurnError] Exception caught in onTurnError : ${err}`);
   }
 
@@ -90,7 +88,8 @@ adapter.onTurnError = async (context, error) => {
       await skillClient.postToSkill(botId, activeSkill, skillsConfig.skillHostEndpoint, endOfConversation);
     }
   } catch (err) {
-    console.error(`\n [onTurnError] Exception caught on attempting to send EndOfConversation : ${err}`);
+    console.error(`\n [onTurnError] Exception caught on attempting to send EndOfConversation : ${err}\n`);
+    AzureLogger.log(`\n AZURE [onTurnError] Exception caught on attempting to send EndOfConversation\n`, err);
   }
 
   try {
