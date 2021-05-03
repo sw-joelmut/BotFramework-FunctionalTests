@@ -1,0 +1,33 @@
+{
+  "manifestVersion": 1,
+  "id": "retry-task-poc",
+  "name": "Retry Task POC",
+  "version": "0.0.13",
+  "publisher": "sw-joelmut",
+  "targets": [
+      {
+          "id": "Microsoft.VisualStudio.Services"
+      }
+  ],    
+  "description": "Retry Task POC",
+  "categories": [
+      "Azure Pipelines"
+  ],
+  "files": [
+      {
+          "path": "src"
+      }
+  ],
+  "contributions": [
+      {
+          "id": "retry-task-poc",
+          "type": "ms.vss-distributed-task.task",
+          "targets": [
+              "ms.vss-distributed-task.tasks"
+          ],
+          "properties": {
+              "name": "src"
+          }
+      }
+  ]
+}
