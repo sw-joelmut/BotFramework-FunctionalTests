@@ -16,8 +16,6 @@ using Microsoft.BotFrameworkFunctionalTests.SimpleHostBot.Dialogs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.ApplicationInsights;
 
 namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
 {
@@ -74,16 +72,6 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
                 // Register a ConfigurationChannelProvider -- this is only for Azure Gov.
                 services.AddSingleton<IChannelProvider, ConfigurationChannelProvider>();
             }
-
-            services.AddLogging(options =>
-            {
-                options.AddConsole();
-                options.SetMinimumLevel(LogLevel.Trace);
-
-                options.AddFilter<ApplicationInsightsLoggerProvider>(string.Empty, LogLevel.Trace);
-
-                options.AddApplicationInsights(Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
-            });
         }
 
         /// <summary>
