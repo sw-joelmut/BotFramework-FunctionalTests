@@ -40,7 +40,7 @@ adapter.onTurnError = async (context, error) => {
   // NOTE: In production environment, you should consider logging this to Azure
   //       application insights.
   console.error(`\n [onTurnError] unhandled error: ${error}`);
-
+  AzureLogger.log(`\n AZURE [onTurnError] unhandled error: `, error);
   try {
     const { message, stack } = error;
 

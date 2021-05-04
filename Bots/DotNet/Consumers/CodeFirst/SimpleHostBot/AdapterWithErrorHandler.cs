@@ -81,6 +81,8 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
                 await turnContext.SendActivityAsync($"Exception: {exception.Message}");
                 await turnContext.SendActivityAsync(exception.ToString());
 
+                _logger.LogError("AZURE TEST ERROR");
+                
                 errorMessageText = "To continue to run this bot, please fix the bot source code.";
                 errorMessage = MessageFactory.Text(errorMessageText, errorMessageText, InputHints.ExpectingInput);
                 await turnContext.SendActivityAsync(errorMessage, cancellationToken);
