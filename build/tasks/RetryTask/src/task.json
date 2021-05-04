@@ -1,47 +1,47 @@
 {
   "$schema": "https://raw.githubusercontent.com/Microsoft/azure-pipelines-task-lib/master/tasks.schema.json",
   "id": "1cf30620-29b8-4feb-95d4-a5b7a9dfffe9",
-  "name": "retry-task-poc",
-  "friendlyName": "RetryTaskPOC",
+  "name": "RetryTask",
+  "friendlyName": "RetryTask",
   "description": "Task wrapper for retry other Azure DevOps tasks.",
-  "helpMarkDown": "",
+  "helpMarkDown": "Task wrapper for retry other Azure DevOps tasks.",
   "category": "Utility",
   "author": "Southworks",
   "version": {
-      "Major": 0,
-      "Minor": 13,
-      "Patch": 0
+    "Major": 0,
+    "Minor": 13,
+    "Patch": 0
   },
-  "instanceNameFormat": "RetryTaskPOC",
+  "instanceNameFormat": "RetryTask",
   "inputs": [
-      {
-        "name": "task",
-        "type": "string",
-        "label": "Task",
-        "defaultValue": "",
-        "required": true,
-        "helpMarkDown": "Name of the task to execute"
-      },
-      {
-        "name": "displayName",
-        "type": "string",
-        "label": "Task Display Name",
-        "defaultValue": "",
-        "required": true,
-        "helpMarkDown": "Name to display of the task to execute"
-      },
-      {
-        "name": "inputs",
-        "type": "multiLine",
-        "label": "Task Inputs",
-        "defaultValue": "",
-        "required": false,
-        "helpMarkDown": "Inputs for the task to execute"
-      }
+    {
+      "name": "name",
+      "type": "string",
+      "label": "Task Name",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "Name of the task to execute"
+    },
+    {
+      "name": "displayName",
+      "type": "string",
+      "label": "Display Name",
+      "defaultValue": "",
+      "required": false,
+      "helpMarkDown": "Name to display when executing the task"
+    },
+    {
+      "name": "inputs",
+      "type": "multiLine",
+      "label": "Inputs",
+      "defaultValue": "",
+      "required": false,
+      "helpMarkDown": "Inputs for the task to execute"
+    }
   ],
   "execution": {
-      "Node10": {
-          "target": "index.js"
-      }
+    "Node10": {
+      "target": "index.js"
+    }
   }
 }
