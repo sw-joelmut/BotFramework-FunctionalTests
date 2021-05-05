@@ -24,6 +24,11 @@ const { allowedSkillsClaimsValidator } = require('./authentication/allowedSkills
 const { SetupDialog } = require('./dialogs/setupDialog');
 const { AzureLogger, setLogLevel } = require('@azure/logger');
 
+const appliationInsights = require("applicationinsights");
+appliationInsights.setup(process.env.APPINSIGHTS_INSTRUMENTATIONKEY).start();
+
+let client = appliationInsights.defaultClient;
+
 // Create adapter.
 // See https://aka.ms/about-bot-adapter to learn more about adapters.
 const adapter = new BotFrameworkAdapter({
@@ -34,13 +39,14 @@ const adapter = new BotFrameworkAdapter({
 
 // Catch-all for errors.
 adapter.onTurnError = async (context, error) => {
-  setLogLevel('error');
+  setLogLevel('info');
 
   // This check writes out errors to console log .vs. app insights.
   // NOTE: In production environment, you should consider logging this to Azure
   //       application insights.
   console.error(`\n [onTurnError] unhandled error: ${error}`);
-  AzureLogger.log(`\n AZURE [onTurnError] unhandled error: `, error);
+  AzureLogger.log(`\n JS AZURE [onTurnError] unhandled error: `, error);
+  client.trackTrace({ message: `\n JS AZURE 2 [onTurnError] unhandled error: \n${error} `, severity: 3 });
   try {
     const { message, stack } = error;
 
@@ -64,8 +70,11 @@ adapter.onTurnError = async (context, error) => {
             'https://www.botframework.com/schemas/error',
             'TurnError'
     );
+    client.trackTrace({ message: `\n JS AZURE 2 ${error} `, severity: 3 });
+
   } catch (err) {
     console.error(`\n [onTurnError] Exception caught in onTurnError : ${err}`);
+    client.trackException({ exception: err });
   }
 
   try {
@@ -89,7 +98,8 @@ adapter.onTurnError = async (context, error) => {
     }
   } catch (err) {
     console.error(`\n [onTurnError] Exception caught on attempting to send EndOfConversation : ${err}\n`);
-    AzureLogger.log(`\n AZURE [onTurnError] Exception caught on attempting to send EndOfConversation\n`, err);
+    AzureLogger.log(`\n JS AZURE [onTurnError] Exception caught on attempting to send EndOfConversation\n`, err);
+    client.trackException({ exception: err });
   }
 
   try {
@@ -97,6 +107,7 @@ adapter.onTurnError = async (context, error) => {
     await conversationState.delete(context);
   } catch (err) {
     console.error(`\n [onTurnError] Exception caught on attempting to Delete ConversationState : ${err}`);
+    client.trackException({ exception: err });
   }
 };
 
