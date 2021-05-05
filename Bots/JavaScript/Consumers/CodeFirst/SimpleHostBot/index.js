@@ -22,7 +22,6 @@ const { SkillsConfiguration } = require('./skillsConfiguration');
 const { SkillConversationIdFactory } = require('./skillConversationIdFactory');
 const { allowedSkillsClaimsValidator } = require('./authentication/allowedSkillsClaimsValidator');
 const { SetupDialog } = require('./dialogs/setupDialog');
-const { AzureLogger, setLogLevel } = require('@azure/logger');
 
 const appliationInsights = require("applicationinsights");
 appliationInsights.setup(process.env.APPINSIGHTS_INSTRUMENTATIONKEY).start();
@@ -45,8 +44,7 @@ adapter.onTurnError = async (context, error) => {
   // NOTE: In production environment, you should consider logging this to Azure
   //       application insights.
   console.error(`\n [onTurnError] unhandled error: ${error}`);
-  AzureLogger.log(`\n JS AZURE [onTurnError] unhandled error: `, error);
-  client.trackTrace({ message: `\n JS AZURE 2 [onTurnError] unhandled error: \n${error} `, severity: 3 });
+  client.trackTrace({ message: `\n [onTurnError] unhandled error: \n${error} `, severity: 3 });
   try {
     const { message, stack } = error;
 
@@ -70,7 +68,7 @@ adapter.onTurnError = async (context, error) => {
             'https://www.botframework.com/schemas/error',
             'TurnError'
     );
-    client.trackTrace({ message: `\n JS AZURE 2 ${error} `, severity: 3 });
+    client.trackTrace({ message: `\n ${error} `, severity: 3 });
 
   } catch (err) {
     console.error(`\n [onTurnError] Exception caught in onTurnError : ${err}`);
@@ -98,7 +96,6 @@ adapter.onTurnError = async (context, error) => {
     }
   } catch (err) {
     console.error(`\n [onTurnError] Exception caught on attempting to send EndOfConversation : ${err}\n`);
-    AzureLogger.log(`\n JS AZURE [onTurnError] Exception caught on attempting to send EndOfConversation\n`, err);
     client.trackException({ exception: err });
   }
 
