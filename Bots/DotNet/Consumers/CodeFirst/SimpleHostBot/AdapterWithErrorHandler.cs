@@ -43,6 +43,8 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
             _skillsConfig = skillsConfig;
 
             OnTurnError = HandleTurnErrorAsync;
+
+            _logger.LogInformation("Log from Adapter constructor");
         }
 
         /// <summary>
@@ -81,8 +83,11 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
                 await turnContext.SendActivityAsync($"Exception: {exception.Message}");
                 await turnContext.SendActivityAsync(exception.ToString());
 
+                _logger.LogInformation("AZURE TEST INFO");
+                _logger.LogWarning("AZURE TEST WARN");
                 _logger.LogError("AZURE TEST ERROR");
-                
+                _logger.LogDebug("AZURE TEST DEBUG");
+
                 errorMessageText = "To continue to run this bot, please fix the bot source code.";
                 errorMessage = MessageFactory.Text(errorMessageText, errorMessageText, InputHints.ExpectingInput);
                 await turnContext.SendActivityAsync(errorMessage, cancellationToken);

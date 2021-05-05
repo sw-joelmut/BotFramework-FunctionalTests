@@ -18,36 +18,19 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
         /// <param name="args">The command line args.</param>
         public static void Main(string[] args)
         {
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false)
-                .Build();
-
-            var host = CreateHostBuilder(args, configuration).Build();
-
-            var logger = host.Services.GetRequiredService<ILogger<Program>>();
-            logger.LogError("AZURE ERROR TEST PROGRAM");
-
-            host.Run();
+            CreateHostBuilder(args).Build().Run();
         }
 
         /// <summary>
         /// Creates a new instance of the <see cref="HostBuilder"/> class with pre-configured defaults.
         /// </summary>
         /// <param name="args">The command line args.</param>
-        /// <param name="configuration">The configuration properties.</param>
         /// <returns>The initialized <see cref="IHostBuilder"/>.</returns>
-        public static IHostBuilder CreateHostBuilder(string[] args, IConfiguration configuration) =>
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>()
-                    .ConfigureLogging(
-                        builder =>
-                        {
-                            builder.AddApplicationInsights(configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
-                            builder.AddFilter<ApplicationInsightsLoggerProvider>(string.Empty, LogLevel.Trace);
-                            builder.AddFilter<ApplicationInsightsLoggerProvider>(typeof(Program).FullName, LogLevel.Trace);
-                        });
+                    webBuilder.UseStartup<Startup>();
                 });
     }
 }
