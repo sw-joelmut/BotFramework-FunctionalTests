@@ -4,8 +4,6 @@ import { Configuration } from './devops/configuration';
 import { getTask } from './devops/getTask';
 import { executeRunner } from './devops/executeRunner';
 
-process.env['agent.tempDirectory'] = 'C:/Users/JoelMut/Downloads/azure-pipelines-tasks-master/Tasks/';
-
 async function run() {
   try {
     setResourcePath(join(__dirname, 'task.json'));

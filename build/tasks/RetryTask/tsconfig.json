@@ -4,6 +4,6 @@
     "module": "commonjs",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": ""
+    "outDir": "dist"
   }
 }
