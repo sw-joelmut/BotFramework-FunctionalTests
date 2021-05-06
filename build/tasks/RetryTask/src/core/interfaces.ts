@@ -1,33 +1,34 @@
-
-export interface TaskClientValues {
-  [key: string]: string | number | boolean
+export interface TaskRunnerValues {
+  [key: string]: string | number | boolean;
 }
 
-export interface TaskClientEnvValues {
-  [key: string]: string
+export interface TaskRunnerEnvValues {
+  [key: string]: string;
 }
 
-export interface TaskClientOptions {
+export interface TaskRunnerOptions {
   path: string;
   displayName?: string;
-  inputs?: TaskClientValues
-  variables?: TaskClientValues
+  inputs?: TaskRunnerValues;
+  variables?: TaskRunnerValues;
 }
 
-export interface TaskClientResult {
+export interface TaskRunnerResult {
   output: string;
-  hasErrors: boolean
+  hasErrors: boolean;
 }
 
 export interface TaskSearchOptions {
-  root: string
-  task: string
+  directory: string;
+  task: string;
 }
 
 export interface TaskSearchResult {
   id: string;
   name: string;
+  description: string;
   version: string;
+  author: string;
+  help: string;
   path: string;
 }
-

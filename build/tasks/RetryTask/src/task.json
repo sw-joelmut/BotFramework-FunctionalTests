@@ -9,18 +9,18 @@
   "author": "Southworks",
   "version": {
     "Major": 0,
-    "Minor": 13,
-    "Patch": 0
+    "Minor": 0,
+    "Patch": 1
   },
   "instanceNameFormat": "RetryTask",
   "inputs": [
     {
-      "name": "name",
+      "name": "task",
       "type": "string",
-      "label": "Task Name",
+      "label": "Task",
       "defaultValue": "",
       "required": true,
-      "helpMarkDown": "Name of the task to execute"
+      "helpMarkDown": "Reference to a task and version, e.g. 'VSBuild@1'."
     },
     {
       "name": "displayName",
@@ -28,7 +28,7 @@
       "label": "Display Name",
       "defaultValue": "",
       "required": false,
-      "helpMarkDown": "Name to display when executing the task"
+      "helpMarkDown": "Friendly name displayed in the Console Output."
     },
     {
       "name": "inputs",
@@ -36,12 +36,20 @@
       "label": "Inputs",
       "defaultValue": "",
       "required": false,
-      "helpMarkDown": "Inputs for the task to execute"
+      "helpMarkDown": "Task-specific Inputs in YAML format. <br> **e.g.** <br>    solution: '**\\*.sln'<br>    vsVersion: 'latest'<br>    logFileVerbosity: 'detailed'"
+    },
+    {
+      "name": "maxRetries",
+      "type": "int",
+      "label": "Max. Retries",
+      "defaultValue": "3",
+      "required": false,
+      "helpMarkDown": "Number of times to execute the Task in case of failure."
     }
   ],
   "execution": {
     "Node10": {
-      "target": "index.js"
+      "target": "retry.js"
     }
   }
 }

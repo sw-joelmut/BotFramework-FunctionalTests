@@ -1,25 +1,30 @@
 {
-  "name": "retry-task-poc",
+  "name": "retry-task",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "retry.js",
   "scripts": {
-    "dev": "nodemon --config nodemon.json index.ts",
-    "dev:debug": "nodemon --config nodemon.json --inspect-brk index.ts"
+    "lint": "semistandard ./**/*.ts",
+    "dev": "nodemon --config nodemon.json retry.ts",
+    "dev:debug": "nodemon --config nodemon.json --inspect-brk retry.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "adm-zip": "^0.5.5",
     "azure-pipelines-task-lib": "^3.1.2",
-    "cross-env": "^7.0.3",
     "glob": "^7.1.6",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "node-fetch": "^2.6.1"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.4.34",
     "@types/glob": "^7.1.3",
     "@types/js-yaml": "^4.0.1",
     "@types/node": "^15.0.1",
+    "@types/node-fetch": "^2.5.10",
+    "dotenv": "^8.6.0",
     "nodemon": "^2.0.7",
     "ts-node": "^9.1.1",
     "typescript": "^4.2.4"
