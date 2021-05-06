@@ -1,4 +1,4 @@
-import { TaskSearchResult } from '../core/interfaces';
+import { TaskFinderResult } from '../core/interfaces';
 import { Configuration } from './configuration';
 
 export interface ConfigurationInputs {
@@ -7,7 +7,7 @@ export interface ConfigurationInputs {
 
 export interface ExecuteRunnerOptions {
   configuration: Configuration;
-  task: TaskSearchResult;
+  task: TaskFinderResult;
 }
 
 export interface ExecuteRunnerResult {

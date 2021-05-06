@@ -2,7 +2,7 @@ import glob from 'glob';
 import { promisify } from 'util';
 import { pipeline } from 'stream';
 import { readFileSync, createWriteStream } from 'fs';
-import { TaskSearchOptions, TaskSearchResult } from './interfaces';
+import { TaskFinderOptions, TaskFinderResult } from './interfaces';
 import fetch from 'node-fetch';
 import AdmZip from 'adm-zip';
 
@@ -12,12 +12,12 @@ export class TaskFinder {
   private readonly task: string;
   private readonly version: string;
 
-  constructor(private readonly options: TaskSearchOptions) {
+  constructor(private readonly options: TaskFinderOptions) {
     if (!this.options.directory?.trim().length) {
-      throw new Error("[TaskSearch.constructor]: Missing 'options.root' parameter. (required)");
+      throw new Error("[TaskFinder.constructor]: Missing 'options.root' parameter. (required)");
     }
     if (!this.options.task?.trim().length) {
-      throw new Error("[TaskSearch.constructor]: Missing 'options.task' parameter. (required)");
+      throw new Error("[TaskFinder.constructor]: Missing 'options.task' parameter. (required)");
     }
 
     const [task, version] = this.options.task.split('@');
@@ -28,7 +28,7 @@ export class TaskFinder {
       : this.options.directory;
   }
 
-  public find(): TaskSearchResult {
+  public find(): TaskFinderResult {
     const folders = glob.sync(`${this.options.directory}/${this.task}*`);
 
     for (const folder of folders) {
@@ -64,7 +64,7 @@ export class TaskFinder {
     }
   }
 
-  public async downloadFromSourceCode(): Promise<TaskSearchResult> {
+  public async downloadFromSourceCode(): Promise<TaskFinderResult> {
     // TODO: Download the task
     const repoUrl = 'https://api.github.com/repos/microsoft/azure-pipelines-tasks';
 

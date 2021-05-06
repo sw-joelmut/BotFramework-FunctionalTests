@@ -1,8 +1,8 @@
 import { setResult, TaskResult } from 'azure-pipelines-task-lib/task';
 import { TaskFinder } from '../core/finder';
-import { TaskSearchOptions, TaskSearchResult } from '../core/interfaces';
+import { TaskFinderOptions, TaskFinderResult } from '../core/interfaces';
 
-export async function getTask(options: TaskSearchOptions): Promise<TaskSearchResult> {
+export async function getTask(options: TaskFinderOptions): Promise<TaskFinderResult> {
   console.log(`[TaskFinder] Looking for installed ${options.task} task in '${options.directory}'.`);
 
   const finder = new TaskFinder(options);

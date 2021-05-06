@@ -18,12 +18,12 @@ export interface TaskRunnerResult {
   hasErrors: boolean;
 }
 
-export interface TaskSearchOptions {
+export interface TaskFinderOptions {
   directory: string;
   task: string;
 }
 
-export interface TaskSearchResult {
+export interface TaskFinderResult {
   id: string;
   name: string;
   description: string;
