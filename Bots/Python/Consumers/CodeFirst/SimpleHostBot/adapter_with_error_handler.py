@@ -89,6 +89,10 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
             )
             await turn_context.send_activity(error_message)
 
+            self.telemetry_client.track_exception(value=error)
+            logging.exception(f"\n AZURE Error: {error}")
+            logging.debug("\n AZURE debug")
+
             # Send a trace activity, which will be displayed in Bot Framework Emulator.
             await turn_context.send_trace_activity(
                 label="TurnError",
