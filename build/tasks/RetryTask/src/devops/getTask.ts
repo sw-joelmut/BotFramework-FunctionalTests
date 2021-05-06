@@ -1,20 +1,35 @@
 import { setResult, TaskResult } from 'azure-pipelines-task-lib/task';
 import { TaskFinder } from '../core/finder';
+import { TaskDownloader } from '../core/downloader';
 import { TaskFinderOptions, TaskFinderResult } from '../core/interfaces';
 
+// TODO: Store this in a local storage.
+const store = new Map();
+
 export async function getTask(options: TaskFinderOptions): Promise<TaskFinderResult> {
+  let task;
   console.log(`[TaskFinder] Looking for installed ${options.task} task in '${options.directory}'.`);
 
   const finder = new TaskFinder(options);
-  let task = finder.find();
+
+  const path = store.get(options.task);
+
+  task = finder.find(path);
 
   if (!task) {
     console.log(`[TaskFinder] Unable to find ${options.task} task in '${options.directory}'.`);
 
-    // TODO: Disabled until implemented.
-    // console.log(`[TaskFinder] Dowloading ${options.task} task from [microsoft/azure-pipelines-tasks](https://github.com/microsoft/azure-pipelines-tasks).`);
+    console.log(
+      `[TaskFinder] Dowloading ${options.task} task from [microsoft/azure-pipelines-tasks](https://github.com/microsoft/azure-pipelines-tasks).`
+    );
 
-    // task = await finder.downloadFromSourceCode();
+    const downloader = new TaskDownloader();
+    const installer = new TaskInstaller();
+
+    const path = await downloader.downloadSourceCode();
+    store.set(options.task, path);
+    await installer.install();
+    task = finder.find(path);
   }
 
   if (task) {

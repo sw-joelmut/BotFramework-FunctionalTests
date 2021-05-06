@@ -4,6 +4,7 @@
     "module": "commonjs",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "dist"
-  }
+    "outDir": "dist/src",
+  },
+  "include": ["src"]
 }

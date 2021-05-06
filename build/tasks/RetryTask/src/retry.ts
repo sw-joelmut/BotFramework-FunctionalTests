@@ -6,7 +6,7 @@ import { executeRunner } from './devops/executeRunner';
 
 async function run() {
   try {
-    setResourcePath(join(__dirname, 'task.json'));
+    setResourcePath(join(__dirname, '../task.json'));
 
     const configuration = new Configuration();
 

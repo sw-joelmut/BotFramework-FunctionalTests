@@ -1,12 +1,6 @@
 import glob from 'glob';
-import { promisify } from 'util';
-import { pipeline } from 'stream';
-import { readFileSync, createWriteStream } from 'fs';
+import { readFileSync } from 'fs';
 import { TaskFinderOptions, TaskFinderResult } from './interfaces';
-import fetch from 'node-fetch';
-import AdmZip from 'adm-zip';
-
-const streamPipeline = promisify(pipeline);
 
 export class TaskFinder {
   private readonly task: string;
@@ -28,14 +22,17 @@ export class TaskFinder {
       : this.options.directory;
   }
 
-  public find(): TaskFinderResult {
-    const folders = glob.sync(`${this.options.directory}/${this.task}*`);
+  public find(directory?: string): TaskFinderResult {
+    const dir = directory || this.options.directory;
+    const folders = glob.sync(`${dir}/**/${this.task}*`);
 
     for (const folder of folders) {
       const [path] = glob.sync(`${folder}/**/task.json`) || [];
       if (!path) {
         continue;
       }
+
+      const actualFolder = path.replace('/task.json', '');
 
       const content = JSON.parse(readFileSync(path, { encoding: 'utf8' }));
       if (content?.name === this.task && content?.version.Major === Number(this.version)) {
@@ -58,42 +55,9 @@ export class TaskFinder {
           version: `${Major}.${Minor}.${Patch}`,
           author: content?.author || '',
           help: content?.helpUrl || '',
-          path: `${folder}/${file}`,
+          path: `${actualFolder}/${file}`,
         };
       }
     }
-  }
-
-  public async downloadFromSourceCode(): Promise<TaskFinderResult> {
-    // TODO: Download the task
-    const repoUrl = 'https://api.github.com/repos/microsoft/azure-pipelines-tasks';
-
-    const data = await fetch(repoUrl);
-    const repoInfo = await data.json();
-
-    console.log(repoInfo?.default_branch);
-
-    const response = await fetch(`${repoUrl}/zipball/${repoInfo.default_branch}`);
-
-    if (!response.ok) {
-      throw '';
-    }
-
-    await streamPipeline(response.body, createWriteStream(`${__dirname}/test/azure-pipelines-tasks.zip`));
-
-    const zip = new AdmZip(`${__dirname}/test/azure-pipelines-tasks.zip`);
-    zip.extractAllTo(`${__dirname}/test/azure-pipelines-tasks`);
-
-    console.log('finished');
-
-    return {
-      id: '',
-      name: '',
-      description: '',
-      version: '',
-      author: '',
-      help: '',
-      path: '',
-    };
   }
 }

@@ -10,7 +10,7 @@ export class Configuration {
   public readonly maxRetries: number;
 
   constructor() {
-    const rootDir = getVariable('agent.rootDirectory');
+    const rootDir = getVariable('agent.rootDirectory') || '';
     this.tasksDir = process.env.TASKSDIR || `${rootDir}/_tasks`;
     this.task = getInput('task', true);
     this.displayName = getInput('displayName', false);

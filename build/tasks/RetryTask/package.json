@@ -1,15 +1,15 @@
 {
   "name": "retry-task",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "Task wrapper for retry other Azure DevOps tasks.",
-  "main": "dist/retry.js",
+  "main": "src/retry.js",
   "scripts": {
     "dev": "nodemon --config nodemon.json src/retry.ts",
     "dev:debug": "nodemon --config nodemon.json --inspect-brk src/retry.ts",
     "build": "tsc",
     "postbuild": "copyfiles package.json task.json dist && cd dist && npm install --only=production",
-    "update:version": "ts-node updateVersion.ts --version 0.0.1",
-    "create:vsix": "npm run build && npm run update:version && tfx extension create --manifest-globs vss-extension.json --output-path dist"
+    "update:version": "ts-node updateVersion.ts --version 0.0.4",
+    "create:vsix": "npm run update:version && npm run build && tfx extension create --manifest-globs vss-extension.json --output-path dist"
   },
   "keywords": [],
   "author": "",
