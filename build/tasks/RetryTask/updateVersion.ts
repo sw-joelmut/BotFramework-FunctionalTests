@@ -1,5 +1,6 @@
+import { EOL } from 'os';
+import { writeFileSync } from 'fs';
 import minimist from 'minimist';
-import fs from 'fs';
 
 const command = minimist(process.argv.slice(2));
 
@@ -9,13 +10,13 @@ if (command.version || command.v) {
   const vssextensionjson = require('./vss-extension.json');
   const taskjson = require('./task.json');
 
-  const [Mayor, Minor, Patch] = version.split('.');
+  const [Major, Minor, Patch] = version.split('.');
 
   packagejson.version = version;
   vssextensionjson.version = version;
-  taskjson.version = { Mayor, Minor, Patch };
+  taskjson.version = { Major: Number(Major), Minor: Number(Minor), Patch: Number(Patch) };
 
-  fs.writeFileSync('./package.json', JSON.stringify(packagejson));
-  fs.writeFileSync('./vss-extension.json', JSON.stringify(vssextensionjson));
-  fs.writeFileSync('./task.json', JSON.stringify(taskjson));
+  writeFileSync('./package.json', JSON.stringify(packagejson, null, 2) + EOL);
+  writeFileSync('./vss-extension.json', JSON.stringify(vssextensionjson, null, 2) + EOL);
+  writeFileSync('./task.json', JSON.stringify(taskjson, null, 2) + EOL);
 }

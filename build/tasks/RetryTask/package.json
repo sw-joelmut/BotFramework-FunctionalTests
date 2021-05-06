@@ -8,8 +8,8 @@
     "dev:debug": "nodemon --config nodemon.json --inspect-brk src/retry.ts",
     "build": "tsc",
     "postbuild": "copyfiles package.json task.json dist && cd dist && npm install --only=production",
-    "update-version": "ts-node updateVersion.ts --version 0.0.1",
-    "publish:test": "tfx extension publish --manifest-globs vss-extension.json"
+    "update:version": "ts-node updateVersion.ts --version 0.0.1",
+    "create:vsix": "npm run build && npm run update:version && tfx extension create --manifest-globs vss-extension.json --output-path dist"
   },
   "keywords": [],
   "author": "",
