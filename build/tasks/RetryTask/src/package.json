@@ -4,7 +4,6 @@
   "description": "",
   "main": "retry.js",
   "scripts": {
-    "lint": "semistandard ./**/*.ts",
     "dev": "nodemon --config nodemon.json retry.ts",
     "dev:debug": "nodemon --config nodemon.json --inspect-brk retry.ts"
   },
