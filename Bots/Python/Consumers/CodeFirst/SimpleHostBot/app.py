@@ -26,6 +26,7 @@ from authentication import AllowedSkillsClaimsValidator
 from bots import HostBot
 from config import DefaultConfig, SkillConfiguration
 from adapter_with_error_handler import AdapterWithErrorHandler
+from applicationinsights import TelemetryClient
 
 CONFIG = DefaultConfig()
 SKILL_CONFIG = SkillConfiguration()
@@ -49,8 +50,10 @@ ID_FACTORY = SkillConversationIdFactory(STORAGE)
 CREDENTIAL_PROVIDER = SimpleCredentialProvider(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
 CLIENT = SkillHttpClient(CREDENTIAL_PROVIDER, ID_FACTORY)
 
+TELEMETRY_CLIENT = TelemetryClient(CONFIG.APPLICATIONINSIGHTS_INSTRUMENTATION_KEY)
+
 ADAPTER = AdapterWithErrorHandler(
-    SETTINGS, CONFIG, CONVERSATION_STATE, CLIENT, SKILL_CONFIG
+    SETTINGS, CONFIG, CONVERSATION_STATE, TELEMETRY_CLIENT, CLIENT, SKILL_CONFIG, 
 )
 
 # Create the Bot

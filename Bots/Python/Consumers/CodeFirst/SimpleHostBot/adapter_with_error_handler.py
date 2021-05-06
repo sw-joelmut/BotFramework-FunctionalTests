@@ -17,7 +17,8 @@ from config import DefaultConfig, SkillConfiguration
 from bots.host_bot import ACTIVE_SKILL_PROPERTY_NAME
 
 import logging
-from applicationinsights.logging import enable
+from applicationinsights.logging import LoggingHandler
+from applicationinsights import TelemetryClient
 
 class AdapterWithErrorHandler(BotFrameworkAdapter):
     def __init__(
@@ -25,6 +26,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
         settings: BotFrameworkAdapterSettings,
         config: DefaultConfig,
         conversation_state: ConversationState,
+        telemetry_client: TelemetryClient,
         skill_client: SkillHttpClient = None,
         skill_config: SkillConfiguration = None,
     ):
@@ -41,13 +43,19 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
 
         self.on_turn_error = self._handle_turn_error
         
-        enable(self._config.APPLICATIONINSIGHTS_INSTRUMENTATION_KEY)
+        self.telemetry_client = telemetry_client
+
+        handler = LoggingHandler(self._config.APPLICATIONINSIGHTS_INSTRUMENTATION_KEY)
+        logging.basicConfig(handlers=[ handler ], format='%(levelname)s: %(message)s', level=logging.DEBUG)
 
     async def _handle_turn_error(self, turn_context: TurnContext, error: Exception):
         # This check writes out errors to console log
         # NOTE: In production environment, you should consider logging this to Azure
         #       application insights.
+        
+        self.telemetry_client.track_exception(value=error)
         logging.exception(f"\n AZURE [on_turn_error] unhandled error: {error}")
+        logging.debug("\n AZURE debug")
         print(f"\n [on_turn_error] unhandled error: {error}", file=sys.stderr)
         # traceback.print_exc()
         await self._send_error_message(turn_context, error)
