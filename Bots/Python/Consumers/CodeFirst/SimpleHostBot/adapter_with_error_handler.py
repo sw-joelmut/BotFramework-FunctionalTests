@@ -41,10 +41,13 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
         self._skill_client = skill_client
         self._skill_config = skill_config
 
+        config_integration.trace_integrations(['logging'])
+
         self.logger = logger
         self.logger.addHandler(AzureLogHandler(
             connection_string=f"InstrumentationKey={self._config.APPLICATIONINSIGHTS_INSTRUMENTATION_KEY}"
         ))
+        logger.setLevel(logging.ERROR)
 
         self.on_turn_error = self._handle_turn_error
 
