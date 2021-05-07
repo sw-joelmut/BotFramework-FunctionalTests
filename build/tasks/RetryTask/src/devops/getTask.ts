@@ -2,6 +2,7 @@ import { setResult, TaskResult } from 'azure-pipelines-task-lib/task';
 import { TaskFinder } from '../core/finder';
 import { TaskDownloader } from '../core/downloader';
 import { TaskFinderOptions, TaskFinderResult } from '../core/interfaces';
+import { TaskInstaller } from '../core/installer';
 
 // TODO: Store this in a local storage.
 const store = new Map();
@@ -10,10 +11,10 @@ export async function getTask(options: TaskFinderOptions): Promise<TaskFinderRes
   let task;
   console.log(`[TaskFinder] Looking for installed ${options.task} task in '${options.directory}'.`);
 
-  const finder = new TaskFinder(options);
-
   const path = store.get(options.task);
 
+  const finder = new TaskFinder(options);
+  // Search for task, if directory isn't provided it will use the constructor directory.
   task = finder.find(path);
 
   if (!task) {
@@ -27,9 +28,19 @@ export async function getTask(options: TaskFinderOptions): Promise<TaskFinderRes
     const installer = new TaskInstaller();
 
     const path = await downloader.downloadSourceCode();
-    store.set(options.task, path);
-    await installer.install();
-    task = finder.find(path);
+
+    if (path) {
+      task = finder.find(path);
+
+      if (task) {
+        await installer.install(task.path);
+        store.set(options.task, task.path);
+      } else {
+        console.log(`[TaskFinder] Unable to find downloaded ${options.task} task in '${path}'.`);
+      }
+    } else {
+      console.log(`[TaskFinder] Unable to download and unzip source code from 'microsoft/azure-pipelines-tasks'.`);
+    }
   }
 
   if (task) {
