@@ -23,10 +23,13 @@ const { SkillConversationIdFactory } = require('./skillConversationIdFactory');
 const { allowedSkillsClaimsValidator } = require('./authentication/allowedSkillsClaimsValidator');
 const { SetupDialog } = require('./dialogs/setupDialog');
 
-const appliationInsights = require("applicationinsights");
-appliationInsights.setup(process.env.APPINSIGHTS_INSTRUMENTATIONKEY).start();
+const applicationInsights = require("applicationinsights");
+applicationInsights.setup(process.env.APPINSIGHTS_INSTRUMENTATIONKEY)
+  .setAutoCollectDependencies(false)
+  .setAutoCollectRequests(false)
+  .start();
 
-let client = appliationInsights.defaultClient;
+let client = applicationInsights.defaultClient;
 
 // Create adapter.
 // See https://aka.ms/about-bot-adapter to learn more about adapters.
@@ -38,13 +41,12 @@ const adapter = new BotFrameworkAdapter({
 
 // Catch-all for errors.
 adapter.onTurnError = async (context, error) => {
-  setLogLevel('info');
 
   // This check writes out errors to console log .vs. app insights.
   // NOTE: In production environment, you should consider logging this to Azure
   //       application insights.
   console.error(`\n [onTurnError] unhandled error: ${error}`);
-  client.trackTrace({ message: `\n [onTurnError] unhandled error: \n${error} `, severity: 3 });
+  client.trackException({ exception: new Error(`\n [onTurnError] unhandled error: \n${error} `)});
   try {
     const { message, stack } = error;
 
@@ -96,7 +98,7 @@ adapter.onTurnError = async (context, error) => {
     }
   } catch (err) {
     console.error(`\n [onTurnError] Exception caught on attempting to send EndOfConversation : ${err}\n`);
-    client.trackException({ exception: err });
+    client.trackException({ exception: new Error(`\n [onTurnError] Exception caught on attempting to send EndOfConversation : ${err}\n`)});
   }
 
   try {
@@ -104,7 +106,7 @@ adapter.onTurnError = async (context, error) => {
     await conversationState.delete(context);
   } catch (err) {
     console.error(`\n [onTurnError] Exception caught on attempting to Delete ConversationState : ${err}`);
-    client.trackException({ exception: err });
+    client.trackException({ exception: new Error(`\n [onTurnError] Exception caught on attempting to Delete ConversationState : ${err}`)});
   }
 };
 
