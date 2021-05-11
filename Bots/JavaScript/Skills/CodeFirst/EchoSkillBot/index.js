@@ -83,9 +83,6 @@ try {
         code: 'SkillError',
         text: error
       });
-      const msg = `\n onTurnError Trace : ${ message }\n ${ stack }`
-      console.error(msg);
-      client.trackException({ exception: new Error(msg), properties });
     } catch (err) {
       const { message, stack } = err;
       const msg = `\n [onTurnError] Exception caught in onTurnError : ${ message }\n ${ stack }`
