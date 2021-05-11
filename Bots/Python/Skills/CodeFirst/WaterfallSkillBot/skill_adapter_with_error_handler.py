@@ -24,7 +24,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
         super().__init__(settings)
         self.conversation_state = conversation_state
         self.logger = logger
-        self.properties = {'custom_dimensions': {'Environment': 'Python'}}
+        self.properties = {'custom_dimensions': {'Environment': 'Python', 'Bot': 'WaterfallSkillBot'}}
         self.on_turn_error = self._handle_turn_error
 
     async def _handle_turn_error(self, context: TurnContext, error: Exception):

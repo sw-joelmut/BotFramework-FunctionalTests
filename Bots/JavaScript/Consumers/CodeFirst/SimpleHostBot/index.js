@@ -33,7 +33,7 @@ applicationInsights.setup(process.env.APPINSIGHTS_INSTRUMENTATIONKEY)
   .start();
 
 const client = applicationInsights.defaultClient;
-const properties = { Environment: 'JavaScript' }
+const properties = { Environment: 'JavaScript', Bot: 'SimpleHostBot' }
 
 try {
   // Create adapter.

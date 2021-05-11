@@ -11,7 +11,7 @@ applicationInsights.setup(process.env.APPINSIGHTS_INSTRUMENTATIONKEY)
   .setAutoCollectRequests(false)
 
 const client = applicationInsights.defaultClient;
-const properties = { Environment: 'JavaScript' }
+const properties = { Environment: 'JavaScript', Bot: 'EchoSkillBotV3' }
 
 try {
   // Setup Restify Server

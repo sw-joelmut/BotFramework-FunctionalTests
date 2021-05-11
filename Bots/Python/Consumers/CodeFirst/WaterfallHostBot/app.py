@@ -105,5 +105,5 @@ if __name__ == "__main__":
     try:
         web.run_app(APP, host="localhost", port=CONFIG.PORT)
     except Exception as error:
-        LOGGER.exception(f"Error: {error}")
+        LOGGER.exception(f"Error: {error}", extra={'custom_dimensions': {'Environment': 'Python', 'Bot': 'WaterfallHostBot'}})
         raise error

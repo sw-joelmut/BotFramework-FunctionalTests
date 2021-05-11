@@ -40,7 +40,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
         self._skill_client = skill_client
         self._skill_config = skill_config
 
-        self.properties = {'custom_dimensions': {'Environment': 'Python'}}
+        self.properties = {'custom_dimensions': {'Environment': 'Python', 'Bot': 'SimpleHostBot'}}
 
         self.on_turn_error = self._handle_turn_error
 

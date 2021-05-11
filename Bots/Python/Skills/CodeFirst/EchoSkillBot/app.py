@@ -41,7 +41,7 @@ SETTINGS = BotFrameworkAdapterSettings(
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(AzureLogHandler
     (connection_string=f"InstrumentationKey={CONFIG.APPLICATIONINSIGHTS_INSTRUMENTATION_KEY}"))
-PROPERTIES = {'custom_dimensions': {'Environment': 'Python'}}
+PROPERTIES = {'custom_dimensions': {'Environment': 'Python', 'Bot': 'EchoSkillBot'}}
 
 ADAPTER = BotFrameworkAdapter(SETTINGS)
 
@@ -143,5 +143,5 @@ if __name__ == "__main__":
     try:
         web.run_app(APP, host="localhost", port=CONFIG.PORT)
     except Exception as error:
-        LOGGER.exception(f"Error: {error}")
+        LOGGER.exception(f"Error: {error}", extra=PROPERTIES)
         raise error

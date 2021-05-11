@@ -27,7 +27,7 @@ applicationInsights.setup(process.env.APPINSIGHTS_INSTRUMENTATIONKEY)
   .start();
 
 const client = applicationInsights.defaultClient;
-const properties = { Environment: 'JavaScript' }
+const properties = { Environment: 'JavaScript', Bot: 'WaterfallSkillBot' }
 
 try {
   // Create HTTP server
