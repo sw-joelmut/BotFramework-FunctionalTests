@@ -55,9 +55,10 @@ try {
     // NOTE: In production environment, you should consider logging this to Azure
     //       application insights. See https://aka.ms/bottelemetry for telemetry
     //       configuration instructions.
-    const message = `\n [onTurnError] unhandled error: ${ error }`
-    console.error(message);
-    client.trackException({ exception: new Error(message), properties });
+    const { message, stack } = error;
+    const msg = `\n [onTurnError] unhandled error: ${ message }\n ${ stack }`
+    console.error(msg);
+    client.trackException({ exception: new Error(msg), properties });
 
     await sendErrorMessage(context, error);
     await endSkillConversation(context);
@@ -88,13 +89,11 @@ try {
         'https://www.botframework.com/schemas/error',
         'TurnError'
       );
-      const message = `\n onTurnError Trace : ${ error }`
-      console.error(message);
-      client.trackException({ exception: new Error(message), properties });
     } catch (err) {
-      const message = `\n [onTurnError] Exception caught in sendErrorMessage: ${ err }`
-      console.error(message);
-      client.trackException({ exception: new Error(message), properties });
+      const { message, stack } = err;
+      const msg = `\n [onTurnError] Exception caught in sendErrorMessage: ${ message }\n ${ stack }`
+      console.error(msg);
+      client.trackException({ exception: new Error(msg), properties });
     }
   }
 
@@ -119,9 +118,10 @@ try {
         await skillClient.postToSkill(botId, activeSkill, skillsConfig.skillHostEndpoint, endOfConversation);
       }
     } catch (err) {
-      const message = `\n [onTurnError] Exception caught on attempting to send EndOfConversation : ${ err }`
-      console.error(message);
-      client.trackException({ exception: new Error(message), properties });
+      const { message, stack } = err;
+      const msg = `\n [onTurnError] Exception caught on attempting to send EndOfConversation : ${ message }\n ${ stack }`
+      console.error(msg);
+      client.trackException({ exception: new Error(msg), properties });
     }
   }
 
@@ -132,9 +132,10 @@ try {
       // ConversationState should be thought of as similar to "cookie-state" in a Web page.
       await conversationState.delete(context);
     } catch (err) {
-      const message = `\n [onTurnError] Exception caught on attempting to Delete ConversationState : ${ err }`
-      console.error(message);
-      client.trackException({ exception: new Error(message), properties });
+      const { message, stack } = err;
+      const msg = `\n [onTurnError] Exception caught on attempting to Delete ConversationState : ${ message }\n ${ stack }`
+      console.error(msg);
+      client.trackException({ exception: new Error(msg), properties });
     }
   }
 
@@ -206,6 +207,6 @@ try {
   });
 } catch (error) {
   const { message, stack } = error;
-  console.error(`${message}\n ${stack}`);
+  console.error(`${ message }\n ${ stack }`);
   client.trackException({ exception: error, properties });
 }

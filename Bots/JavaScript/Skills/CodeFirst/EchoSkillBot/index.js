@@ -52,13 +52,12 @@ try {
     // This check writes out errors to console log .vs. app insights.
     // NOTE: In production environment, you should consider logging this to Azure
     //       application insights.
-    const message = `\n [onTurnError] unhandled error: ${ error }`
-    console.error(message);
-    client.trackException({ exception: new Error(message), properties });
+    const { message, stack } = error;
+    const msg = `\n [onTurnError] unhandled error: ${ message }\n ${ stack }`
+    console.error(msg);
+    client.trackException({ exception: new Error(msg), properties });
 
     try {
-      const { message, stack } = error;
-
       // Send a message to the user.
       let errorMessageText = 'The skill encountered an error or bug.';
       let errorMessage = MessageFactory.text(`${ errorMessageText }\r\n${ message }\r\n${ stack }`, errorMessageText, InputHints.IgnoringInput);
@@ -84,13 +83,14 @@ try {
         code: 'SkillError',
         text: error
       });
-      const message = `\n onTurnError Trace : ${ error }`
-      console.error(message);
-      client.trackException({ exception: new Error(message), properties });
+      const msg = `\n onTurnError Trace : ${ message }\n ${ stack }`
+      console.error(msg);
+      client.trackException({ exception: new Error(msg), properties });
     } catch (err) {
-      const message = `\n [onTurnError] Exception caught in onTurnError : ${ err }`
-      console.error(message);
-      client.trackException({ exception: new Error(message), properties });
+      const { message, stack } = err;
+      const msg = `\n [onTurnError] Exception caught in onTurnError : ${ message }\n ${ stack }`
+      console.error(msg);
+      client.trackException({ exception: new Error(msg), properties });
     }
   };
 

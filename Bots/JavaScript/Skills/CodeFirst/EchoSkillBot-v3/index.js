@@ -44,35 +44,36 @@ try {
   new builder.UniversalBot(connector, function (session) {
     session.on('error', function (error) {
       const { message, stack } = error;
+      const msg = `\n [onTurnError] unhandled error: ${ message }\n ${ stack }`
+      console.error(msg);
+      client.trackException({ exception: new Error(msg), properties });
+      try {
+        // Send a message to the user.
+        let errorMessageText = 'The skill encountered an error or bug.';
+        let activity = new builder.Message()
+          .text(`${ errorMessageText }\r\n${ message }\r\n${ stack }`)
+          .speak(errorMessageText)
+          .inputHint(builder.InputHint.ignoringInput)
+          .value({ message, stack });
+        session.send(activity);
 
-      const message = `\n [onTurnError] unhandled error: ${ error }`
-      console.error(message);
-      client.trackException({ exception: new Error(message), properties });
+        errorMessageText = 'To continue to run this bot, please fix the bot source code.';
+        activity = new builder.Message()
+          .text(errorMessageText)
+          .speak(errorMessageText)
+          .inputHint(builder.InputHint.expectingInput);
+        session.send(activity);
 
-      // Send a message to the user.
-      let errorMessageText = 'The skill encountered an error or bug.';
-      let activity = new builder.Message()
-        .text(`${ errorMessageText }\r\n${ message }\r\n${ stack }`)
-        .speak(errorMessageText)
-        .inputHint(builder.InputHint.ignoringInput)
-        .value({ message, stack });
-      session.send(activity);
-
-      errorMessageText = 'To continue to run this bot, please fix the bot source code.';
-      activity = new builder.Message()
-        .text(errorMessageText)
-        .speak(errorMessageText)
-        .inputHint(builder.InputHint.expectingInput);
-      session.send(activity);
-
-      activity = new builder.Message()
-        .code('SkillError')
-        .text(message);
-      session.endConversation(activity);
-
-      const message = `\n onTurnError Trace : ${ error }`
-      console.error(message);
-      client.trackException({ exception: new Error(message), properties });
+        activity = new builder.Message()
+          .code('SkillError')
+          .text(message);
+        session.endConversation(activity);
+      } catch (err) {
+        const { message, stack } = err;
+        const msg = `\n [onTurnError] Exception caught in onTurnError : ${ message }\n ${ stack }`
+        console.error(msg);
+        client.trackException({ exception: new Error(msg), properties });
+      }
     });
 
     switch (session.message.text.toLowerCase()) {

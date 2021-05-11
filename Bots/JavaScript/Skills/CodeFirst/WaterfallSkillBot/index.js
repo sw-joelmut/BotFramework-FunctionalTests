@@ -54,13 +54,13 @@ try {
   adapter.onTurnError = async (context, error) => {
     // This check writes out errors to console log .vs. app insights.
     // NOTE: In production environment, you should consider logging this to Azure application insights.
-    const message = `\n [onTurnError] unhandled error: ${ error }`
-    console.error(message);
-    client.trackException({ exception: new Error(message), properties });
+
+    const { message, stack } = error;
+    const msg = `\n [onTurnError] unhandled error: ${ message }\n ${ stack }`
+    console.error(msg);
+    client.trackException({ exception: new Error(msg), properties });
 
     try {
-      const { message, stack } = error;
-
       // Send a message to the user.
       let errorMessageText = 'The skill encountered an error or bug.';
       let errorMessage = MessageFactory.text(`${ errorMessageText }\r\n${ message }\r\n${ stack }`, errorMessageText, InputHints.IgnoringInput);
@@ -86,13 +86,14 @@ try {
         code: 'SkillError',
         text: error
       });
-      const message = `\n onTurnError Trace : ${ error }`
-      console.error(message);
-      client.trackException({ exception: new Error(message), properties });
+      const msg = `\n onTurnError Trace : ${ message }\n ${ stack }`
+      console.error(msg);
+      client.trackException({ exception: new Error(msg), properties });
     } catch (err) {
-      const message = `\n [onTurnError] Exception caught in onTurnError : ${ err }`
-      console.error(message);
-      client.trackException({ exception: new Error(message), properties });
+      const { message, stack } = err;
+      const msg = `\n [onTurnError] Exception caught in onTurnError : ${ message }\n ${ stack }`
+      console.error(msg);
+      client.trackException({ exception: new Error(msg), properties });
     }
   };
 
@@ -176,9 +177,10 @@ try {
       res.send(response);
       res.end();
     } catch (error) {
-      const message = `\n [server.post] Exception caught in '/api/skills/v3/conversations/...' : ${ err }`
-      console.error(message);
-      client.trackException({ exception: new Error(message), properties });
+      const { message, stack } = error;
+      const msg = `\n [server.post] Exception caught in '/api/skills/v3/conversations/...' : ${ message }\n ${ stack }`
+      console.error(msg);
+      client.trackException({ exception: new Error(msg), properties });
       ChannelServiceRoutes.handleError(error, res);
     }
   });
@@ -208,9 +210,10 @@ try {
       });
     } catch (err) {
       error = err;
-      const message = `\n [server.get] Exception caught in '/api/notify' : ${ err }`;
-      console.error(message);
-      client.trackException({ exception: new Error(message), properties });
+      const { message, stack } = err;
+      const msg = `\n [server.get] Exception caught in '/api/notify' : ${ message }\n ${ stack }`;
+      console.error(msg);
+      client.trackException({ exception: new Error(msg), properties });
     }
 
     res.setHeader('Content-Type', 'text/html');
