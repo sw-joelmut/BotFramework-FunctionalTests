@@ -93,12 +93,22 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
         /// </summary>
         /// <param name="app">The application request pipeline to be configured.</param>
         /// <param name="env">The web hosting environment.</param>
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        /// <param name="logger">An instance of a logger.</param>
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseExceptionHandler(options =>
+            {
+                options.Run(async context =>
+                {
+                    var ex = context.Features.Get<IExceptionHandlerFeature>();
+                    logger.LogError(ex as Exception, $"Exception caught in Startup : {ex}");
+                });
+            });
 
             app.UseDefaultFiles()
                 .UseStaticFiles()
