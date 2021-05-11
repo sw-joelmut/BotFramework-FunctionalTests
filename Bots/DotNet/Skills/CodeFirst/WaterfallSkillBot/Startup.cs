@@ -1,8 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.BotFramework;
@@ -17,6 +19,7 @@ using Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot.Dialogs.Proactive;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot
 {
@@ -79,12 +82,21 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseExceptionHandler(options =>
+            {
+                options.Run(async context =>
+                {
+                    var ex = context.Features.Get<IExceptionHandlerFeature>();
+                    logger.LogError(ex as Exception, $"Exception caught in Startup : {ex}");
+                });
+            });
 
             app.UseDefaultFiles()
                 .UseStaticFiles()
