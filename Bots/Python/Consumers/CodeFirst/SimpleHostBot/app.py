@@ -26,7 +26,9 @@ from authentication import AllowedSkillsClaimsValidator
 from bots import HostBot
 from config import DefaultConfig, SkillConfiguration
 from adapter_with_error_handler import AdapterWithErrorHandler
+
 import logging
+from opencensus.ext.azure.log_exporter import AzureLogHandler
 
 CONFIG = DefaultConfig()
 SKILL_CONFIG = SkillConfiguration()
@@ -51,6 +53,8 @@ CREDENTIAL_PROVIDER = SimpleCredentialProvider(CONFIG.APP_ID, CONFIG.APP_PASSWOR
 CLIENT = SkillHttpClient(CREDENTIAL_PROVIDER, ID_FACTORY)
 
 LOGGER = logging.getLogger(__name__)
+LOGGER.addHandler(AzureLogHandler
+    (connection_string=f"InstrumentationKey={CONFIG.APPLICATIONINSIGHTS_INSTRUMENTATION_KEY}"))
 
 ADAPTER = AdapterWithErrorHandler(
     SETTINGS, CONFIG, CONVERSATION_STATE, LOGGER, CLIENT, SKILL_CONFIG, 
@@ -61,7 +65,6 @@ DIALOG = SetupDialog(CONVERSATION_STATE, SKILL_CONFIG)
 BOT = HostBot(CONVERSATION_STATE, SKILL_CONFIG, CLIENT, CONFIG, DIALOG)
 
 SKILL_HANDLER = SkillHandler(ADAPTER, BOT, ID_FACTORY, CREDENTIAL_PROVIDER, AUTH_CONFIG)
-
 
 # Listen for incoming requests on /api/messages
 async def messages(req: Request) -> Response:
@@ -78,8 +81,8 @@ async def messages(req: Request) -> Response:
         await ADAPTER.process_activity(activity, auth_header, BOT.on_turn)
         return Response(status=201)
     except Exception as exception:
+        LOGGER.exception(f"Error: {exception}")
         raise exception
-
 
 APP = web.Application(middlewares=[aiohttp_error_middleware])
 APP.router.add_post("/api/messages", messages)
@@ -89,4 +92,5 @@ if __name__ == "__main__":
     try:
         web.run_app(APP, host="localhost", port=CONFIG.PORT)
     except Exception as error:
+        LOGGER.exception(f"Error: {error}")
         raise error

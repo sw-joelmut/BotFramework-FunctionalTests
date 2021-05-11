@@ -17,6 +17,7 @@ from botbuilder.schema import ActivityTypes, Activity, InputHints
 from skills_configuration import DefaultConfig, SkillsConfiguration
 from bots.root_bot import ACTIVE_SKILL_PROPERTY_NAME
 
+from logging import Logger
 
 class AdapterWithErrorHandler(BotFrameworkAdapter):
     def __init__(
@@ -24,6 +25,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
         settings: BotFrameworkAdapterSettings,
         config: DefaultConfig,
         conversation_state: ConversationState,
+        logger: Logger,
         skill_client: SkillHttpClient = None,
         skill_config: SkillsConfiguration = None,
     ):
@@ -35,8 +37,11 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
                 "AdapterWithErrorHandler: `conversation_state` argument cannot be None."
             )
         self._conversation_state = conversation_state
+        self._logger = logger
         self._skill_client = skill_client
         self._skill_config = skill_config
+
+        self._properties = {'custom_dimensions': {'Environment': 'Python'}}
 
         self.on_turn_error = self._handle_turn_error
 
@@ -44,6 +49,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
         # This check writes out errors to console log
         # NOTE: In production environment, you should consider logging this to Azure
         #       application insights.
+        self._logger.exception(f"\n [on_turn_error] unhandled error: {error}", extra=self._properties)
         print(f"\n [on_turn_error] unhandled error: {error}", file=sys.stderr)
         traceback.print_exc()
         await self._send_error_message(turn_context, error)
@@ -76,6 +82,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
             )
             await turn_context.send_activity(error_message)
 
+            self._logger.exception(f"\n Exception: {error}", extra=self._properties)
             # Send a trace activity, which will be displayed in Bot Framework Emulator.
             await turn_context.send_trace_activity(
                 label="TurnError",
@@ -89,6 +96,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
                 file=sys.stderr,
             )
             traceback.print_exc()
+            self._logger.exception(f"\n Exception caught on _send_error_message : {exception}", extra=self._properties)
 
     async def _end_skill_conversation(self, turn_context: TurnContext):
         if not self._skill_client or not self._skill_config:
@@ -125,6 +133,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
                 file=sys.stderr,
             )
             traceback.print_exc()
+            self._logger.exception(f"\n Exception caught on _end_skill_conversation : {exception}", extra=self._properties)
 
     async def _clear_conversation_state(self, turn_context: TurnContext):
         try:
@@ -138,3 +147,4 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
                 file=sys.stderr,
             )
             traceback.print_exc()
+            self._logger.exception(f"\n Exception caught on _clear_conversation_state : {exception}", extra=self._properties)

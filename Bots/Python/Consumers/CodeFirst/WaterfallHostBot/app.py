@@ -31,6 +31,9 @@ from adapter_with_error_handler import AdapterWithErrorHandler
 from skill_conversation_id_factory import SkillConversationIdFactory
 from token_exchange_skill_handler import TokenExchangeSkillHandler
 
+import logging
+from opencensus.ext.azure.log_exporter import AzureLogHandler
+
 CONFIG = DefaultConfig()
 SKILL_CONFIG = SkillsConfiguration()
 
@@ -43,6 +46,10 @@ ID_FACTORY = SkillConversationIdFactory(MEMORY)
 CREDENTIAL_PROVIDER = SimpleCredentialProvider(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
 CLIENT = SkillHttpClient(CREDENTIAL_PROVIDER, ID_FACTORY)
 
+LOGGER = logging.getLogger(__name__)
+LOGGER.addHandler(AzureLogHandler
+    (connection_string=f"InstrumentationKey={CONFIG.APPLICATIONINSIGHTS_INSTRUMENTATION_KEY}"))
+
 # Whitelist skills from SKILLS_CONFIG
 AUTH_CONFIG = AuthenticationConfiguration(
     claims_validator=AllowedSkillsClaimsValidator(SKILL_CONFIG).claims_validator
@@ -52,7 +59,7 @@ AUTH_CONFIG = AuthenticationConfiguration(
 # See https://aka.ms/about-bot-adapter to learn more about how bots work.
 SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
 ADAPTER = AdapterWithErrorHandler(
-    SETTINGS, CONFIG, CONVERSATION_STATE, CLIENT, SKILL_CONFIG
+    SETTINGS, CONFIG, CONVERSATION_STATE, LOGGER, CLIENT, SKILL_CONFIG
 )
 
 DIALOG = MainDialog(CONVERSATION_STATE, ID_FACTORY, CLIENT, SKILL_CONFIG, CONFIG)
@@ -98,4 +105,5 @@ if __name__ == "__main__":
     try:
         web.run_app(APP, host="localhost", port=CONFIG.PORT)
     except Exception as error:
+        LOGGER.exception(f"Error: {error}")
         raise error

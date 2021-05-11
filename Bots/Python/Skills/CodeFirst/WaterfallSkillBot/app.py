@@ -33,6 +33,9 @@ from middleware import SsoSaveStateMiddleware
 from skill_conversation_id_factory import SkillConversationIdFactory
 from skill_adapter_with_error_handler import AdapterWithErrorHandler
 
+import logging
+from opencensus.ext.azure.log_exporter import AzureLogHandler
+
 CONFIG = DefaultConfig()
 
 # Create MemoryStorage and ConversationState.
@@ -55,7 +58,12 @@ SETTINGS = BotFrameworkAdapterSettings(
     app_password=CONFIG.APP_PASSWORD,
     auth_configuration=AUTH_CONFIG,
 )
-ADAPTER = AdapterWithErrorHandler(SETTINGS, CONVERSATION_STATE)
+
+LOGGER = logging.getLogger(__name__)
+LOGGER.addHandler(AzureLogHandler
+    (connection_string=f"InstrumentationKey={CONFIG.APPLICATIONINSIGHTS_INSTRUMENTATION_KEY}"))
+
+ADAPTER = AdapterWithErrorHandler(SETTINGS, CONVERSATION_STATE, LOGGER)
 
 ADAPTER.use(SsoSaveStateMiddleware(CONVERSATION_STATE))
 
@@ -105,6 +113,7 @@ async def messages(req: Request) -> Response:
         # DeliveryMode => Normal
         return Response(status=HTTPStatus.CREATED)
     except Exception as exception:
+        LOGGER.exception(f"Exception caught on messages: {exception}")
         raise exception
 
 
@@ -137,6 +146,7 @@ async def notify(req: Request) -> Response:
             continuation_parameters.oauth_scope,
         )
     except Exception as err:
+        LOGGER.exception(f"Exception caught on notify: {err}")
         error = err
 
     return Response(
@@ -173,4 +183,5 @@ if __name__ == "__main__":
     try:
         web.run_app(APP, host="localhost", port=CONFIG.PORT)
     except Exception as error:
+        LOGGER.exception(f"Error: {error}")
         raise error

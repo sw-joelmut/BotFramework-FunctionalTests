@@ -22,6 +22,9 @@ from config import DefaultConfig
 from authentication import AllowedCallersClaimsValidator
 from http import HTTPStatus
 
+import logging
+from opencensus.ext.azure.log_exporter import AzureLogHandler
+
 CONFIG = DefaultConfig()
 CLAIMS_VALIDATOR = AllowedCallersClaimsValidator(frozenset(CONFIG.ALLOWED_CALLERS))
 AUTH_CONFIG = AuthenticationConfiguration(
@@ -34,6 +37,12 @@ SETTINGS = BotFrameworkAdapterSettings(
     app_password=CONFIG.APP_PASSWORD,
     auth_configuration=AUTH_CONFIG,
 )
+
+LOGGER = logging.getLogger(__name__)
+LOGGER.addHandler(AzureLogHandler
+    (connection_string=f"InstrumentationKey={CONFIG.APPLICATIONINSIGHTS_INSTRUMENTATION_KEY}"))
+PROPERTIES = {'custom_dimensions': {'Environment': 'Python'}}
+
 ADAPTER = BotFrameworkAdapter(SETTINGS)
 
 # Catch-all for errors.
@@ -43,7 +52,7 @@ async def on_error(context: TurnContext, error: Exception):
     #       application insights.
     print(f"\n [on_turn_error] unhandled error: {error}", file=sys.stderr)
     traceback.print_exc()
-
+    LOGGER.exception(f"\n [on_turn_error] unhandled error: {error}", extra=PROPERTIES)
     try:
         exc_info = sys.exc_info()
         stack = traceback.format_exception(*exc_info)
@@ -66,6 +75,7 @@ async def on_error(context: TurnContext, error: Exception):
         )
         await context.send_activity(error_message)
 
+        LOGGER.exception(f"\n Exception: {error}", extra=PROPERTIES)
         # Send a trace activity, which will be displayed in Bot Framework Emulator
         if context.activity.channel_id == "emulator":
             # Create a trace activity that contains the error object
@@ -90,7 +100,7 @@ async def on_error(context: TurnContext, error: Exception):
             f"\n Exception caught on on_error : {exception}", file=sys.stderr,
         )
         traceback.print_exc()
-
+        LOGGER.exception(f"\n Exception caught on on_error : {exception}", extra=PROPERTIES)
 
 ADAPTER.on_turn_error = on_error
 
@@ -118,6 +128,7 @@ async def messages(req: Request) -> Response:
         # DeliveryMode => Normal
         return Response(status=HTTPStatus.CREATED)
     except Exception as exception:
+        LOGGER.exception(f"\n Exception caught on messages : {exception}", extra=PROPERTIES)
         raise exception
 
 
@@ -132,4 +143,5 @@ if __name__ == "__main__":
     try:
         web.run_app(APP, host="localhost", port=CONFIG.PORT)
     except Exception as error:
+        LOGGER.exception(f"Error: {error}")
         raise error

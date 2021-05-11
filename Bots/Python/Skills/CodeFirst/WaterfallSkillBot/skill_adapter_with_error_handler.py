@@ -12,15 +12,19 @@ from botbuilder.core import (
 )
 from botbuilder.schema import Activity, ActivityTypes, InputHints
 
+from logging import Logger
 
 class AdapterWithErrorHandler(BotFrameworkAdapter):
     def __init__(
         self,
         settings: BotFrameworkAdapterSettings,
         conversation_state: ConversationState,
+        logger: Logger
     ):
         super().__init__(settings)
         self.conversation_state = conversation_state
+        self.logger = logger
+        self.properties = {'custom_dimensions': {'Environment': 'Python'}}
         self.on_turn_error = self._handle_turn_error
 
     async def _handle_turn_error(self, context: TurnContext, error: Exception):
@@ -29,6 +33,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
         #       application insights.
         print(f"\n [on_turn_error] unhandled error: {error}", file=sys.stderr)
         traceback.print_exc()
+        self.logger.exception(f"\n [on_turn_error] unhandled error: {error}", extra=self.properties)
         await self._send_error_message(context, error)
         await self._send_eoc_to_parent(context, error)
         await self._clear_conversation_state(context)
@@ -56,6 +61,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
             )
             await context.send_activity(error_message)
 
+            self.logger.exception(f"\n Exception: {error}", extra=self.properties)
             # Send a trace activity, which will be displayed in the BotFramework Emulator.
             # Note: we return the entire exception in the value property to help the developer;
             # this should not be done in production.
@@ -71,6 +77,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
                 file=sys.stderr,
             )
             traceback.print_exc()
+            self.logger.exception(f"\n Exception caught on _send_error_message : {exception}", extra=self.properties)
 
     async def _send_eoc_to_parent(self, context: TurnContext, error: Exception):
         try:
@@ -87,6 +94,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
                 file=sys.stderr,
             )
             traceback.print_exc()
+            self.logger.exception(f"\n Exception caught on _send_eoc_to_parent : {exception}", extra=self.properties)
 
     async def _clear_conversation_state(self, context: TurnContext):
         if self.conversation_state:
@@ -101,3 +109,4 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
                     file=sys.stderr,
                 )
                 traceback.print_exc()
+                self.logger.exception(f"\n Exception caught on _clear_conversation_state : {exception}", extra=self.properties)
