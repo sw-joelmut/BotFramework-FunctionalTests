@@ -1,7 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Bot.Builder;
@@ -11,6 +13,7 @@ using Microsoft.Bot.Connector.Authentication;
 using Microsoft.BotFrameworkFunctionalTests.EchoSkillBot21.Bots;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.BotFrameworkFunctionalTests.EchoSkillBot21
 {
@@ -55,7 +58,8 @@ namespace Microsoft.BotFrameworkFunctionalTests.EchoSkillBot21
         /// </summary>
         /// <param name="app">The application request pipeline to be configured.</param>
         /// <param name="env">The web hosting environment.</param>
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        /// <param name="logger">An instance of a logger.</param>
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILogger<Startup> logger)
         {
             if (env.IsDevelopment())
             {
@@ -65,6 +69,15 @@ namespace Microsoft.BotFrameworkFunctionalTests.EchoSkillBot21
             {
                 app.UseHsts();
             }
+
+            app.UseExceptionHandler(options =>
+            {
+                options.Run(async context =>
+                {
+                    var ex = context.Features.Get<IExceptionHandlerFeature>();
+                    logger.LogError(ex as Exception, $"Exception caught in Startup : {ex}");
+                });
+            });
 
             app.UseDefaultFiles();
             app.UseStaticFiles();
