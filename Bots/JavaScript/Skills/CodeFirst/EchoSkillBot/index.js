@@ -18,72 +18,94 @@ dotenv.config({ path: ENV_FILE });
 const { EchoBot } = require('./bot');
 const { allowedCallersClaimsValidator } = require('./authentication/allowedCallersClaimsValidator');
 
-// Create HTTP server
-const server = restify.createServer();
-server.listen(process.env.port || process.env.PORT || 36400, () => {
-  console.log(`\n${server.name} listening to ${server.url}`);
-  console.log('\nGet Bot Framework Emulator: https://aka.ms/botframework-emulator');
-  console.log('\nTo talk to your bot, open the emulator select "Open Bot"');
-});
+const applicationInsights = require("applicationinsights");
+applicationInsights.setup(process.env.APPINSIGHTS_INSTRUMENTATIONKEY)
+  .setAutoCollectDependencies(false)
+  .setAutoCollectRequests(false)
+  .start();
 
-// Expose the manifest
-server.get('/manifests/*', restify.plugins.serveStatic({ directory: './manifests', appendRequestPath: false }));
+const client = applicationInsights.defaultClient;
+const properties = { Environment: 'JavaScript' }
 
-// Create adapter.
-// See https://aka.ms/about-bot-adapter to learn more about how bots work.
-const adapter = new BotFrameworkAdapter({
-  appId: process.env.MicrosoftAppId,
-  appPassword: process.env.MicrosoftAppPassword,
-  authConfig: new AuthenticationConfiguration([], allowedCallersClaimsValidator)
-});
-
-// Catch-all for errors.
-adapter.onTurnError = async (context, error) => {
-  // This check writes out errors to console log .vs. app insights.
-  // NOTE: In production environment, you should consider logging this to Azure
-  //       application insights.
-  console.error(`\n [onTurnError] unhandled error: ${error}`);
-
-  try {
-    const { message, stack } = error;
-
-    // Send a message to the user.
-    let errorMessageText = 'The skill encountered an error or bug.';
-    let errorMessage = MessageFactory.text(`${errorMessageText}\r\n${message}\r\n${stack}`, errorMessageText, InputHints.IgnoringInput);
-    errorMessage.value = { message, stack };
-    await context.sendActivity(errorMessage);
-
-    errorMessageText = 'To continue to run this bot, please fix the bot source code.';
-    errorMessage = MessageFactory.text(errorMessageText, errorMessageText, InputHints.ExpectingInput);
-    await context.sendActivity(errorMessage);
-
-    // Send a trace activity, which will be displayed in Bot Framework Emulator
-    await context.sendTraceActivity(
-      'OnTurnError Trace',
-      `${error}`,
-      'https://www.botframework.com/schemas/error',
-      'TurnError'
-    );
-
-    // Send and EndOfConversation activity to the skill caller with the error to end the conversation
-    // and let the caller decide what to do.
-    await context.sendActivity({
-      type: ActivityTypes.EndOfConversation,
-      code: 'SkillError',
-      text: error
-    });
-  } catch (err) {
-    console.error(`\n [onTurnError] Exception caught in onTurnError : ${err}`);
-  }
-};
-
-// Create the bot that will handle incoming messages.
-const myBot = new EchoBot();
-
-// Listen for incoming requests.
-server.post('/api/messages', (req, res) => {
-  adapter.processActivity(req, res, async (context) => {
-    // Route to main dialog.
-    await myBot.run(context);
+try {
+  // Create HTTP server
+  const server = restify.createServer();
+  server.listen(process.env.port || process.env.PORT || 36400, () => {
+    console.log(`\n${ server.name } listening to ${ server.url }`);
+    console.log('\nGet Bot Framework Emulator: https://aka.ms/botframework-emulator');
+    console.log('\nTo talk to your bot, open the emulator select "Open Bot"');
   });
-});
+
+  // Expose the manifest
+  server.get('/manifests/*', restify.plugins.serveStatic({ directory: './manifests', appendRequestPath: false }));
+
+  // Create adapter.
+  // See https://aka.ms/about-bot-adapter to learn more about how bots work.
+  const adapter = new BotFrameworkAdapter({
+    appId: process.env.MicrosoftAppId,
+    appPassword: process.env.MicrosoftAppPassword,
+    authConfig: new AuthenticationConfiguration([], allowedCallersClaimsValidator)
+  });
+
+  // Catch-all for errors.
+  adapter.onTurnError = async (context, error) => {
+    // This check writes out errors to console log .vs. app insights.
+    // NOTE: In production environment, you should consider logging this to Azure
+    //       application insights.
+    const message = `\n [onTurnError] unhandled error: ${ error }`
+    console.error(message);
+    client.trackException({ exception: new Error(message), properties });
+
+    try {
+      const { message, stack } = error;
+
+      // Send a message to the user.
+      let errorMessageText = 'The skill encountered an error or bug.';
+      let errorMessage = MessageFactory.text(`${ errorMessageText }\r\n${ message }\r\n${ stack }`, errorMessageText, InputHints.IgnoringInput);
+      errorMessage.value = { message, stack };
+      await context.sendActivity(errorMessage);
+
+      errorMessageText = 'To continue to run this bot, please fix the bot source code.';
+      errorMessage = MessageFactory.text(errorMessageText, errorMessageText, InputHints.ExpectingInput);
+      await context.sendActivity(errorMessage);
+
+      // Send a trace activity, which will be displayed in Bot Framework Emulator
+      await context.sendTraceActivity(
+        'OnTurnError Trace',
+        `${ error }`,
+        'https://www.botframework.com/schemas/error',
+        'TurnError'
+      );
+
+      // Send and EndOfConversation activity to the skill caller with the error to end the conversation
+      // and let the caller decide what to do.
+      await context.sendActivity({
+        type: ActivityTypes.EndOfConversation,
+        code: 'SkillError',
+        text: error
+      });
+      const message = `\n onTurnError Trace : ${ error }`
+      console.error(message);
+      client.trackException({ exception: new Error(message), properties });
+    } catch (err) {
+      const message = `\n [onTurnError] Exception caught in onTurnError : ${ err }`
+      console.error(message);
+      client.trackException({ exception: new Error(message), properties });
+    }
+  };
+
+  // Create the bot that will handle incoming messages.
+  const myBot = new EchoBot();
+
+  // Listen for incoming requests.
+  server.post('/api/messages', (req, res) => {
+    adapter.processActivity(req, res, async (context) => {
+      // Route to main dialog.
+      await myBot.run(context);
+    });
+  });
+} catch (error) {
+  const { message, stack } = error;
+  console.error(`${ message }\n ${ stack }`);
+  client.trackException({ exception: error, properties });
+}
