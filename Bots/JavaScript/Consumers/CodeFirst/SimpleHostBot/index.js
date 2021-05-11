@@ -46,7 +46,7 @@ adapter.onTurnError = async (context, error) => {
   // NOTE: In production environment, you should consider logging this to Azure
   //       application insights.
   console.error(`\n [onTurnError] unhandled error: ${error}`);
-  client.trackException({ exception: new Error(`\n [onTurnError] unhandled error: \n${error} `)});
+  client.trackException({ exception: new Error(`\n [onTurnError] unhandled error: ${error} `)});
   try {
     const { message, stack } = error;
 
@@ -70,11 +70,11 @@ adapter.onTurnError = async (context, error) => {
             'https://www.botframework.com/schemas/error',
             'TurnError'
     );
-    client.trackTrace({ message: `\n ${error} `, severity: 3 });
+    client.trackException({ exception: new Error(`\n onTurnError Trace : ${error}`), properties: {Environment: "JavaScript"}});
 
   } catch (err) {
     console.error(`\n [onTurnError] Exception caught in onTurnError : ${err}`);
-    client.trackException({ exception: err });
+    client.trackException({ exception: new Error(`\n [onTurnError] Exception caught in onTurnError : ${err}`), properties: {Environment: "JavaScript"}});
   }
 
   try {
@@ -98,7 +98,7 @@ adapter.onTurnError = async (context, error) => {
     }
   } catch (err) {
     console.error(`\n [onTurnError] Exception caught on attempting to send EndOfConversation : ${err}\n`);
-    client.trackException({ exception: new Error(`\n [onTurnError] Exception caught on attempting to send EndOfConversation : ${err}\n`)});
+    client.trackException({ exception: new Error(`\n [onTurnError] Exception caught on attempting to send EndOfConversation : ${err}\n`), properties: {Environment: "JavaScript"}});
   }
 
   try {
@@ -106,7 +106,7 @@ adapter.onTurnError = async (context, error) => {
     await conversationState.delete(context);
   } catch (err) {
     console.error(`\n [onTurnError] Exception caught on attempting to Delete ConversationState : ${err}`);
-    client.trackException({ exception: new Error(`\n [onTurnError] Exception caught on attempting to Delete ConversationState : ${err}`)});
+    client.trackException({ exception: new Error(`\n [onTurnError] Exception caught on attempting to Delete ConversationState : ${err}`), properties: {Environment: "JavaScript"}});
   }
 };
 

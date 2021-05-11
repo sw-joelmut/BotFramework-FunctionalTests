@@ -46,6 +46,8 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
             connection_string=f"InstrumentationKey={self._config.APPLICATIONINSIGHTS_INSTRUMENTATION_KEY}"
         ))
 
+        self.properties = {'custom_dimensions': {'Environment': 'Python'}}
+
         self.on_turn_error = self._handle_turn_error
 
     async def _handle_turn_error(self, turn_context: TurnContext, error: Exception):
@@ -53,7 +55,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
         # NOTE: In production environment, you should consider logging this to Azure
         #       application insights.
 
-        self.logger.exception(f"\n AZURE [on_turn_error] unhandled error: {error}")
+        self.logger.exception(f"\n AZURE [on_turn_error] unhandled error: {error}", extra=self.properties)
         print(f"\n [on_turn_error] unhandled error: {error}", file=sys.stderr)
         # traceback.print_exc()
         await self._send_error_message(turn_context, error)
@@ -87,7 +89,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
             )
             await turn_context.send_activity(error_message)
 
-            self.logger.exception(f"\n AZURE ERROR: {error}")
+            self.logger.exception(f"\n Exception: {error}", extra=self.properties)
 
             # Send a trace activity, which will be displayed in Bot Framework Emulator.
             await turn_context.send_trace_activity(
@@ -97,7 +99,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
                 value_type="https://www.botframework.com/schemas/error",
             )
         except Exception as exception:
-            self.logger.exception(f"\n Exception caught on _send_error_message : {exception}")
+            self.logger.exception(f"\n Exception caught on _send_error_message : {exception}", extra=self.properties)
             print(
                 f"\n Exception caught on _send_error_message : {exception}",
                 file=sys.stderr,
@@ -136,7 +138,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
                     end_of_conversation,
                 )
         except Exception as exception:
-            self.logger.exception(f"\n Exception caught on _end_skill_conversation : {exception}")
+            self.logger.exception(f"\n Exception caught on _end_skill_conversation : {exception}", extra=self.properties)
             print(
                 f"\n Exception caught on _end_skill_conversation : {exception}",
                 file=sys.stderr,
@@ -150,7 +152,7 @@ class AdapterWithErrorHandler(BotFrameworkAdapter):
             # ConversationState should be thought of as similar to "cookie-state" for a Web page.
             await self._conversation_state.delete(turn_context)
         except Exception as exception:
-            self.logger.exception(f"\n Exception caught on _clear_conversation_state : {exception}")
+            self.logger.exception(f"\n Exception caught on _clear_conversation_state : {exception}", extra=self.properties)
             print(
                 f"\n Exception caught on _clear_conversation_state : {exception}",
                 file=sys.stderr,
