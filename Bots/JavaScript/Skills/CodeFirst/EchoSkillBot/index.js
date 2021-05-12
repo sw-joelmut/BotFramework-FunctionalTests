@@ -96,7 +96,9 @@ try {
 
   // Listen for incoming requests.
   server.post('/api/messages', (req, res) => {
+    client.trackTrace({ message: '/api/messages called', properties, contextObjects: { request: req } })
     adapter.processActivity(req, res, async (context) => {
+      client.trackTrace({ message: '/api/messages processActivity called', properties, contextObjects: { context } })
       // Route to main dialog.
       await myBot.run(context);
     });
