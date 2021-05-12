@@ -166,6 +166,37 @@ try {
   const handler = new SkillHandler(adapter, bot, conversationIdFactory, credentialProvider, authConfig);
   const skillEndpoint = new ChannelServiceRoutes(handler);
   skillEndpoint.register(server, '/api/skills');
+  
+  function parseRequest(req) {
+    return new Promise((resolve, reject) => {
+      if (req.body) {
+        try {
+          resolve(req.body);
+        } catch (err) {
+          reject(err);
+        }
+      } else {
+        let requestData = '';
+        req.on('data', (chunk) => {
+          requestData += chunk;
+        });
+        req.on('end', () => {
+          try {
+            req.body = JSON.parse(requestData);
+            resolve(req.body);
+          } catch (err) {
+            reject(err);
+          }
+        });
+      }
+    });
+  }
+
+  server.use(async (req, res, next) => {
+    const request = await parseRequest(req);
+    client.trackEvent({ name: 'RequestMiddleware', properties: { ...properties, activity: request } })
+    next()
+  })
 } catch (error) {
   const { message, stack } = error;
   console.error(`${message}\n ${stack}`);
