@@ -8,6 +8,7 @@ from datetime import datetime
 
 from aiohttp import web
 from aiohttp.web import Request, Response
+from aiohttp.web_middlewares import middleware
 from botbuilder.core import (
     BotFrameworkAdapter,
     BotFrameworkAdapterSettings,
@@ -131,8 +132,14 @@ async def messages(req: Request) -> Response:
         LOGGER.exception(f"\n Exception caught on messages : {exception}", extra=PROPERTIES)
         raise exception
 
+@middleware
+async def custom_middleware(request: Request, handler):
+    activity = await request.json()
+    LOGGER.warning('RequestMiddleware', extra={'custom_dimensions': {'Environment': 'Python', 'Bot': 'EchoSkillBot', 'activity': str(activity)}})
+    response = await handler(request)
+    return response
 
-APP = web.Application()
+APP = web.Application(middlewares=[custom_middleware])
 APP.router.add_post("/api/messages", messages)
 
 # simple way of exposing the manifest for dev purposes.

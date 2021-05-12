@@ -87,8 +87,17 @@ async def messages(req: Request) -> Response:
         LOGGER.exception(f"Error: {exception}")
         raise exception
 
-MIDDLEWARE = CustomMiddleware(LOGGER)
-APP = web.Application(middlewares=[aiohttp_error_middleware, MIDDLEWARE.custom_middleware])
+# MIDDLEWARE = CustomMiddleware(LOGGER)
+
+
+@middleware
+async def custom_middleware(request: Request, handler):
+    activity = await request.json()
+    LOGGER.warning('RequestMiddleware', extra={'custom_dimensions': {'Environment': 'Python', 'Bot': 'SimpleHostBot', 'activity': str(activity)}})
+    response = await handler(request)
+    return response
+
+APP = web.Application(middlewares=[aiohttp_error_middleware, custom_middleware])
 APP.router.add_post("/api/messages", messages)
 APP.router.add_routes(aiohttp_channel_service_routes(SKILL_HANDLER, "/api/skills"))
 

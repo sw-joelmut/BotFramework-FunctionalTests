@@ -7,6 +7,7 @@ from http import HTTPStatus
 from typing import Dict
 from aiohttp import web
 from aiohttp.web import Request, Response, json_response
+from aiohttp.web_middlewares import middleware
 from botbuilder.core import (
     BotFrameworkAdapterSettings,
     ConversationState,
@@ -162,8 +163,14 @@ async def music(req: Request) -> web.FileResponse:  # pylint: disable=unused-arg
     file_path = os.path.join(os.getcwd(), "dialogs/cards/files/music.mp3")
     return web.FileResponse(file_path)
 
+@middleware
+async def custom_middleware(request: Request, handler):
+    activity = await request.json()
+    LOGGER.warning('RequestMiddleware', extra={'custom_dimensions': {'Environment': 'Python', 'Bot': 'WaterfallSkillBot', 'activity': str(activity)}})
+    response = await handler(request)
+    return response
 
-APP = web.Application(middlewares=[aiohttp_error_middleware])
+APP = web.Application(middlewares=[aiohttp_error_middleware, custom_middleware])
 APP.router.add_post("/api/messages", messages)
 APP.router.add_routes(aiohttp_channel_service_routes(SKILL_HANDLER, "/api/skills"))
 

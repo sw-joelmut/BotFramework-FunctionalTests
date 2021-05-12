@@ -5,6 +5,7 @@ from http import HTTPStatus
 
 from aiohttp import web
 from aiohttp.web import Request, Response
+from aiohttp.web_middlewares import middleware
 from aiohttp.web_response import json_response
 from botbuilder.core import (
     BotFrameworkAdapterSettings,
@@ -95,8 +96,14 @@ async def messages(req: Request) -> Response:
         return json_response(data=invoke_response.body, status=invoke_response.status)
     return Response(status=HTTPStatus.OK)
 
+@middleware
+async def custom_middleware(request: Request, handler):
+    activity = await request.json()
+    LOGGER.warning('RequestMiddleware', extra={'custom_dimensions': {'Environment': 'Python', 'Bot': 'WaterfallHostBot', 'activity': str(activity)}})
+    response = await handler(request)
+    return response
 
-APP = web.Application(middlewares=[aiohttp_error_middleware])
+APP = web.Application(middlewares=[aiohttp_error_middleware, custom_middleware])
 APP.router.add_post("/api/messages", messages)
 APP.router.add_get("/api/messages", messages)
 APP.router.add_routes(aiohttp_channel_service_routes(SKILL_HANDLER, "/api/skills"))
