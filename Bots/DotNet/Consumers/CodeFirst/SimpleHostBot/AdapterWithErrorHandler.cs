@@ -43,8 +43,6 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
             _skillsConfig = skillsConfig;
 
             OnTurnError = HandleTurnErrorAsync;
-
-            _logger.LogInformation("Log from Adapter constructor");
         }
 
         /// <summary>
