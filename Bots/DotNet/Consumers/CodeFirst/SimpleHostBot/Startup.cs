@@ -104,27 +104,6 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseExceptionHandler(options =>
-            {
-                options.Run(async context =>
-                {
-                    var ex = context.Features.Get<IExceptionHandlerFeature>();
-                    logger.LogError(ex as Exception, $"Exception caught in Startup : {ex.Error}");
-                });
-            });
-
-            app.Use(async (context, next) =>
-            {
-                var activity = await new StreamReader(context.Request.Body).ReadToEndAsync();
-
-                using (logger.BeginScope(new Dictionary<string, object> { { "Environment", "DotNet" }, { "Bot", "SimpleHostBot" }, { "Activity", activity } }))
-                {
-                    logger.LogTrace("Activity Middleware");
-                }
-
-                await next.Invoke();
-            });
-
             app.UseDefaultFiles()
                 .UseStaticFiles()
                 .UseRouting()
