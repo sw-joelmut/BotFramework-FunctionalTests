@@ -2,14 +2,18 @@
 // Licensed under the MIT License.
 
 using System;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Bot.Builder;
+using Microsoft.Bot.Builder.ApplicationInsights;
 using Microsoft.Bot.Builder.BotFramework;
+using Microsoft.Bot.Builder.Integration.ApplicationInsights.Core;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Connector.Authentication;
 using Microsoft.BotFrameworkFunctionalTests.EchoSkillBot.Bots;
+using Microsoft.BotFrameworkFunctionalTests.EchoSkillBot.Middleware;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -40,6 +44,21 @@ namespace Microsoft.BotFrameworkFunctionalTests.EchoSkillBot
             // Register AuthConfiguration to enable custom claim validation.
             services.AddSingleton(sp => new AuthenticationConfiguration { ClaimsValidator = new Authentication.AllowedCallersClaimsValidator(sp.GetService<IConfiguration>()) });
 
+            // Add Application Insights services into service collection
+            services.AddApplicationInsightsTelemetry();
+
+            // Create the telemetry client.
+            services.AddSingleton<IBotTelemetryClient, BotTelemetryClient>();
+
+            // Add telemetry initializer that will set the correlation context for all telemetry items.
+            services.AddSingleton<ITelemetryInitializer, OperationCorrelationTelemetryInitializer>();
+
+            // Add telemetry initializer that sets the user ID and session ID (in addition to other bot-specific properties such as activity ID)
+            services.AddSingleton<ITelemetryInitializer, TelemetryBotIdInitializer>();
+
+            // Create the telemetry middleware (used by the telemetry initializer) to track conversation events
+            services.AddSingleton<TelemetryListenerMiddleware>();
+
             // Create the Bot Framework Adapter with error handling enabled.
             services.AddSingleton<IBotFrameworkHttpAdapter, SkillAdapterWithErrorHandler>();
 
@@ -65,15 +84,6 @@ namespace Microsoft.BotFrameworkFunctionalTests.EchoSkillBot
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            app.UseExceptionHandler(options =>
-            {
-                options.Run(async context =>
-                {
-                    var ex = context.Features.Get<IExceptionHandlerFeature>();
-                    logger.LogError(ex as Exception, $"Exception caught in Startup : {ex}");
-                });
-            });
 
             app.UseDefaultFiles()
                 .UseStaticFiles()

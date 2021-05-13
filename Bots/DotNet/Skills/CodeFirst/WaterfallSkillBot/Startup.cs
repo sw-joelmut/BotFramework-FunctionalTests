@@ -3,11 +3,14 @@
 
 using System;
 using System.Collections.Concurrent;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Bot.Builder;
+using Microsoft.Bot.Builder.ApplicationInsights;
 using Microsoft.Bot.Builder.BotFramework;
+using Microsoft.Bot.Builder.Integration.ApplicationInsights.Core;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Builder.Integration.AspNet.Core.Skills;
 using Microsoft.Bot.Builder.Skills;
@@ -16,6 +19,7 @@ using Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot.Authentication;
 using Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot.Bots;
 using Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot.Dialogs;
 using Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot.Dialogs.Proactive;
+using Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot.Middleware;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -59,6 +63,21 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot
             services.AddHttpClient<SkillHttpClient>();
             services.AddSingleton<ChannelServiceHandler, SkillHandler>();
 
+            // Add Application Insights services into service collection
+            services.AddApplicationInsightsTelemetry();
+
+            // Create the telemetry client.
+            services.AddSingleton<IBotTelemetryClient, BotTelemetryClient>();
+
+            // Add telemetry initializer that will set the correlation context for all telemetry items.
+            services.AddSingleton<ITelemetryInitializer, OperationCorrelationTelemetryInitializer>();
+
+            // Add telemetry initializer that sets the user ID and session ID (in addition to other bot-specific properties such as activity ID)
+            services.AddSingleton<ITelemetryInitializer, TelemetryBotIdInitializer>();
+
+            // Create the telemetry middleware (used by the telemetry initializer) to track conversation events
+            services.AddSingleton<TelemetryListenerMiddleware>();
+
             // Create the storage we'll be using for User and Conversation state. (Memory is great for testing purposes.)
             services.AddSingleton<IStorage, MemoryStorage>();
 
@@ -88,15 +107,6 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            app.UseExceptionHandler(options =>
-            {
-                options.Run(async context =>
-                {
-                    var ex = context.Features.Get<IExceptionHandlerFeature>();
-                    logger.LogError(ex as Exception, $"Exception caught in Startup : {ex}");
-                });
-            });
 
             app.UseDefaultFiles()
                 .UseStaticFiles()
