@@ -25,8 +25,9 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot
         private readonly ILogger _logger;
         private readonly SkillHttpClient _skillClient;
         private readonly SkillsConfiguration _skillsConfig;
+        private IBotTelemetryClient _adapterBotTelemetryClient;
 
-        public AdapterWithErrorHandler(IConfiguration configuration, ILogger<BotFrameworkHttpAdapter> logger, ConversationState conversationState, SkillHttpClient skillClient = null, SkillsConfiguration skillsConfig = null)
+        public AdapterWithErrorHandler(IConfiguration configuration, ILogger<BotFrameworkHttpAdapter> logger, TelemetryListenerMiddleware telemetryListenerMiddleware, IBotTelemetryClient botTelemetryClient, ConversationState conversationState, SkillHttpClient skillClient = null, SkillsConfiguration skillsConfig = null)
             : base(configuration, logger)
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -36,7 +37,10 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot
             _skillsConfig = skillsConfig;
 
             OnTurnError = HandleTurnError;
-            Use(new LoggerMiddleware(logger));
+
+            Use(telemetryListenerMiddleware);
+
+            _adapterBotTelemetryClient = botTelemetryClient;
         }
 
         private async Task HandleTurnError(ITurnContext turnContext, Exception exception)

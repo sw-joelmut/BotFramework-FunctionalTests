@@ -7,6 +7,7 @@ using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Builder.TraceExtensions;
 using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Bot.Schema;
+using Microsoft.BotFrameworkFunctionalTests.EchoSkillBot21.Middleware;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -14,6 +15,8 @@ namespace Microsoft.BotFrameworkFunctionalTests.EchoSkillBot21
 {
     public class SkillAdapterWithErrorHandler : BotFrameworkHttpAdapter
     {
+        private IBotTelemetryClient _adapterBotTelemetryClient;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SkillAdapterWithErrorHandler"/> class to handle errors.
         /// </summary>
@@ -22,9 +25,14 @@ namespace Microsoft.BotFrameworkFunctionalTests.EchoSkillBot21
         /// <param name="authConfig">The configuration setting for the authentication.</param>
         /// <param name="logger">An instance of a logger.</param>
         /// <param name="conversationState">A state management object for the conversation.</param>
-        public SkillAdapterWithErrorHandler(IConfiguration configuration, ICredentialProvider credentialProvider, AuthenticationConfiguration authConfig, ILogger<BotFrameworkHttpAdapter> logger)
+        /// <param name="telemetryListenerMiddleware">The middleware for logging to Application Insightsr.</param>
+        /// <param name="botTelemetryClient">An instance of a telemetry client.</param>
+        public SkillAdapterWithErrorHandler(IConfiguration configuration, ICredentialProvider credentialProvider, AuthenticationConfiguration authConfig, ILogger<BotFrameworkHttpAdapter> logger, TelemetryListenerMiddleware telemetryListenerMiddleware, IBotTelemetryClient botTelemetryClient)
             : base(configuration, credentialProvider, authConfig, logger: logger)
         {
+            Use(telemetryListenerMiddleware);
+            _adapterBotTelemetryClient = botTelemetryClient;
+
             OnTurnError = async (turnContext, exception) =>
             {
                 try

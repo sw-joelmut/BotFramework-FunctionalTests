@@ -3,6 +3,7 @@
 
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot21
 {
@@ -24,6 +25,11 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot21
         /// <returns>The initialized <see cref="IWebHostBuilder"/>.</returns>
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                .ConfigureLogging((logging) =>
+                {
+                    logging.AddDebug();
+                    logging.AddConsole();
+                })
                 .UseStartup<Startup>();
     }
 }

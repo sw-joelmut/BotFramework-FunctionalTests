@@ -18,13 +18,17 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot
     {
         private readonly ConversationState _conversationState;
         private readonly ILogger _logger;
+        private IBotTelemetryClient _adapterBotTelemetryClient;
 
-        public SkillAdapterWithErrorHandler(IConfiguration configuration, ICredentialProvider credentialProvider, AuthenticationConfiguration authConfig, ILogger<BotFrameworkHttpAdapter> logger, ConversationState conversationState)
+        public SkillAdapterWithErrorHandler(IConfiguration configuration, ICredentialProvider credentialProvider, AuthenticationConfiguration authConfig, ILogger<BotFrameworkHttpAdapter> logger, ConversationState conversationState, TelemetryListenerMiddleware telemetryListenerMiddleware, IBotTelemetryClient botTelemetryClient)
             : base(configuration, credentialProvider, authConfig, logger: logger)
         {
             _conversationState = conversationState ?? throw new ArgumentNullException(nameof(conversationState));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             OnTurnError = HandleTurnError;
+
+            Use(telemetryListenerMiddleware);
+            _adapterBotTelemetryClient = botTelemetryClient;
 
             // Add autosave middleware for SSO. 
             Use(new SsoSaveStateMiddleware(_conversationState));

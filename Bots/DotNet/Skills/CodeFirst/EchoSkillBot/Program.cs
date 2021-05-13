@@ -3,6 +3,7 @@
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.BotFrameworkFunctionalTests.EchoSkillBot
 {
@@ -26,6 +27,11 @@ namespace Microsoft.BotFrameworkFunctionalTests.EchoSkillBot
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
+                    webBuilder.ConfigureLogging((logging) =>
+                    {
+                        logging.AddDebug();
+                        logging.AddConsole();
+                    });
                     webBuilder.UseStartup<Startup>();
                 });
     }

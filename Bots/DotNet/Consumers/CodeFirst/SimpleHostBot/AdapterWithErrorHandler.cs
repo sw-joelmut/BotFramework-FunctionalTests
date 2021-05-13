@@ -12,6 +12,7 @@ using Microsoft.Bot.Builder.TraceExtensions;
 using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Bot.Schema;
 using Microsoft.BotFrameworkFunctionalTests.SimpleHostBot.Bots;
+using Microsoft.BotFrameworkFunctionalTests.SimpleHostBot.Middleware;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -24,6 +25,7 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
         private readonly ILogger _logger;
         private readonly SkillHttpClient _skillClient;
         private readonly SkillsConfiguration _skillsConfig;
+        private IBotTelemetryClient _adapterBotTelemetryClient;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AdapterWithErrorHandler"/> class to handle errors.
@@ -33,7 +35,9 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
         /// <param name="conversationState">A state management object for the conversation.</param>
         /// <param name="skillClient">The HTTP client for the skills.</param>
         /// <param name="skillsConfig">The skills configuration.</param>
-        public AdapterWithErrorHandler(IConfiguration configuration, ILogger<BotFrameworkHttpAdapter> logger, ConversationState conversationState = null, SkillHttpClient skillClient = null, SkillsConfiguration skillsConfig = null)
+        /// <param name="telemetryListenerMiddleware">The middleware for logging to Application Insightsr.</param>
+        /// <param name="botTelemetryClient">An instance of a telemetry client.</param>
+        public AdapterWithErrorHandler(IConfiguration configuration, ILogger<BotFrameworkHttpAdapter> logger, TelemetryListenerMiddleware telemetryListenerMiddleware, IBotTelemetryClient botTelemetryClient, ConversationState conversationState = null, SkillHttpClient skillClient = null, SkillsConfiguration skillsConfig = null)
             : base(configuration, logger)
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -41,6 +45,9 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _skillClient = skillClient;
             _skillsConfig = skillsConfig;
+
+            Use(telemetryListenerMiddleware);
+            _adapterBotTelemetryClient = botTelemetryClient;
 
             OnTurnError = HandleTurnErrorAsync;
         }
