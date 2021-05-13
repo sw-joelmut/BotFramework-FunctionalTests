@@ -15,12 +15,13 @@
     "url": "https://github.com"
   },
   "dependencies": {
+    "applicationinsights": "^1.8.10",
     "botbuilder": "~4.12.0",
+    "botbuilder-applicationinsights": "~4.12.0",
     "botbuilder-dialogs": "~4.12.0",
     "dotenv": "^8.2.0",
     "node-fetch": "^2.6.1",
-    "restify": "~8.5.1",
-    "applicationinsights": "^1.8.10"
+    "restify": "~8.5.1"
   },
   "devDependencies": {
     "nodemon": "~2.0.4"

@@ -20,6 +20,10 @@ const { allowedCallersClaimsValidator } = require('./authentication/allowedCalle
 const { SsoSaveStateMiddleware } = require('./middleware/ssoSaveStateMiddleware');
 const { SkillConversationIdFactory } = require('./skillConversationIdFactory');
 
+// Import required services for bot telemetry
+const { ApplicationInsightsTelemetryClient, TelemetryInitializerMiddleware } = require('botbuilder-applicationinsights');
+const { TelemetryLoggerMiddleware } = require('botbuilder-core');
+
 const applicationInsights = require("applicationinsights");
 applicationInsights.setup(process.env.APPINSIGHTS_INSTRUMENTATIONKEY)
   .setAutoCollectDependencies(false)
@@ -49,6 +53,47 @@ try {
     appPassword: process.env.MicrosoftAppPassword,
     authConfig
   });
+
+  class TelemetryListenerMiddleware extends TelemetryLoggerMiddleware {
+    constructor(bot, telemetryClient, logPersonalInformation) {
+      super(telemetryClient, logPersonalInformation)
+      this.from = bot;
+    }
+
+    onSendActivity(activity) {
+      this.telemetryClient.trackEvent({
+        name: TelemetryLoggerMiddleware.botMsgSendEvent,
+        properties: {
+          from: this.from,
+          to: activity && activity.from ? activity.from.name : '',
+          conversationId: activity && activity.conversation ? activity.conversation.id : '',
+          activityId: activity ? activity.id : '',
+          activityText: activity ? activity.text : '',
+          activity
+        },
+      });
+    }
+
+    onReceiveActivity(activity) {
+      this.telemetryClient.trackEvent({
+        name: TelemetryLoggerMiddleware.botMsgReceiveEvent,
+        properties: {
+          from: this.from,
+          to: activity && activity.from ? activity.from.name : '',
+          conversationId: activity && activity.conversation ? activity.conversation.id : '',
+          activityId: activity ? activity.id : '',
+          activityText: activity ? activity.text : '',
+          activity
+        },
+      });
+    }
+  }
+
+  // Add telemetry middleware to the adapter middleware pipeline
+  const telemetryClient = process.env.APPINSIGHTS_INSTRUMENTATIONKEY ? new ApplicationInsightsTelemetryClient(process.env.APPINSIGHTS_INSTRUMENTATIONKEY) : new NullTelemetryClient();
+  const telemetryLoggerMiddleware = new TelemetryListenerMiddleware('WaterfallSkillBot', telemetryClient, true);
+  const initializerMiddleware = new TelemetryInitializerMiddleware(telemetryLoggerMiddleware, true);
+  adapter.use(initializerMiddleware);
 
   // Catch-all for errors.
   adapter.onTurnError = async (context, error) => {
@@ -132,9 +177,7 @@ try {
 
   // Listen for incoming requests.
   server.post('/api/messages', (req, res) => {
-    client.trackTrace({ message: '/api/messages called', properties, contextObjects: { request: req } })
     adapter.processActivity(req, res, async (context) => {
-      client.trackTrace({ message: '/api/messages processActivity called', properties, contextObjects: { context } })
       // Route to main dialog.
       await bot.run(context);
     });
@@ -224,36 +267,36 @@ try {
     res.end();
   });
 
-  function parseRequest(req) {
-    return new Promise((resolve, reject) => {
-      if (req.body) {
-        try {
-          resolve(req.body);
-        } catch (err) {
-          reject(err);
-        }
-      } else {
-        let requestData = '';
-        req.on('data', (chunk) => {
-          requestData += chunk;
-        });
-        req.on('end', () => {
-          try {
-            req.body = JSON.parse(requestData);
-            resolve(req.body);
-          } catch (err) {
-            reject(err);
-          }
-        });
-      }
-    });
-  }
+  // function parseRequest(req) {
+  //   return new Promise((resolve, reject) => {
+  //     if (req.body) {
+  //       try {
+  //         resolve(req.body);
+  //       } catch (err) {
+  //         reject(err);
+  //       }
+  //     } else {
+  //       let requestData = '';
+  //       req.on('data', (chunk) => {
+  //         requestData += chunk;
+  //       });
+  //       req.on('end', () => {
+  //         try {
+  //           req.body = JSON.parse(requestData);
+  //           resolve(req.body);
+  //         } catch (err) {
+  //           reject(err);
+  //         }
+  //       });
+  //     }
+  //   });
+  // }
 
-  server.use(async (req, res, next) => {
-    const request = await parseRequest(req);
-    client.trackEvent({ name: 'RequestMiddleware', properties: { ...properties, activity: request } })
-    next()
-  })
+  // server.use(async (req, res, next) => {
+  //   const request = await parseRequest(req);
+  //   client.trackEvent({ name: 'RequestMiddleware', properties: { ...properties, activity: request } })
+  //   next()
+  // })
 
 } catch (error) {
   const { message, stack } = error;

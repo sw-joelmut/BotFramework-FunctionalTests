@@ -176,9 +176,7 @@ try {
 
   // Listen for incoming activities and route them to your bot main dialog.
   server.post('/api/messages', (req, res) => {
-    client.trackTrace({ message: '/api/messages called', properties, contextObjects: { request: req } })
     adapter.processActivity(req, res, async (context) => {
-      client.trackTrace({ message: '/api/messages processActivity called', properties, contextObjects: { context } })
       // route to bot activity handler.
       await bot.run(context);
     });
@@ -206,36 +204,37 @@ try {
       await bot.run(context);
     });
   });
-  function parseRequest(req) {
-    return new Promise((resolve, reject) => {
-      if (req.body) {
-        try {
-          resolve(req.body);
-        } catch (err) {
-          reject(err);
-        }
-      } else {
-        let requestData = '';
-        req.on('data', (chunk) => {
-          requestData += chunk;
-        });
-        req.on('end', () => {
-          try {
-            req.body = JSON.parse(requestData);
-            resolve(req.body);
-          } catch (err) {
-            reject(err);
-          }
-        });
-      }
-    });
-  }
 
-  server.use(async (req, res, next) => {
-    const request = await parseRequest(req);
-    client.trackEvent({ name: 'RequestMiddleware', properties: { ...properties, activity: request } })
-    next()
-  })
+  // function parseRequest(req) {
+  //   return new Promise((resolve, reject) => {
+  //     if (req.body) {
+  //       try {
+  //         resolve(req.body);
+  //       } catch (err) {
+  //         reject(err);
+  //       }
+  //     } else {
+  //       let requestData = '';
+  //       req.on('data', (chunk) => {
+  //         requestData += chunk;
+  //       });
+  //       req.on('end', () => {
+  //         try {
+  //           req.body = JSON.parse(requestData);
+  //           resolve(req.body);
+  //         } catch (err) {
+  //           reject(err);
+  //         }
+  //       });
+  //     }
+  //   });
+  // }
+
+  // server.use(async (req, res, next) => {
+  //   const request = await parseRequest(req);
+  //   client.trackEvent({ name: 'RequestMiddleware', properties: { ...properties, activity: request } })
+  //   next()
+  // })
 } catch (error) {
   const { message, stack } = error;
   console.error(`${ message }\n ${ stack }`);
