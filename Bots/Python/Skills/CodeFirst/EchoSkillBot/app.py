@@ -5,16 +5,19 @@ import json
 import sys
 import traceback
 from datetime import datetime
+from typing import Dict
 
 from aiohttp import web
 from aiohttp.web import Request, Response
-from aiohttp.web_middlewares import middleware
+from botbuilder.core.bot_telemetry_client import BotTelemetryClient
 from botbuilder.core import (
     BotFrameworkAdapter,
     BotFrameworkAdapterSettings,
     TurnContext,
     MessageFactory,
 )
+from botbuilder.core.telemetry_logger_constants import TelemetryLoggerConstants
+from botbuilder.core.telemetry_logger_middleware import TelemetryLoggerMiddleware
 from botbuilder.schema import Activity, ActivityTypes, InputHints
 from botframework.connector.auth import AuthenticationConfiguration
 
@@ -24,7 +27,7 @@ from authentication import AllowedCallersClaimsValidator
 from http import HTTPStatus
 
 import logging
-from opencensus.ext.azure.log_exporter import AzureLogHandler
+from opencensus.ext.azure.log_exporter import AzureEventHandler, AzureLogHandler
 
 CONFIG = DefaultConfig()
 CLAIMS_VALIDATOR = AllowedCallersClaimsValidator(frozenset(CONFIG.ALLOWED_CALLERS))
@@ -40,11 +43,73 @@ SETTINGS = BotFrameworkAdapterSettings(
 )
 
 LOGGER = logging.getLogger(__name__)
-LOGGER.addHandler(AzureLogHandler
-    (connection_string=f"InstrumentationKey={CONFIG.APPLICATIONINSIGHTS_INSTRUMENTATION_KEY}"))
+LOGGER.addHandler(AzureEventHandler
+    (connection_string=f"InstrumentationKey={CONFIG.APPINSIGHTS_INSTRUMENTATIONKEY}"))
 PROPERTIES = {'custom_dimensions': {'Environment': 'Python', 'Bot': 'EchoSkillBot'}}
 
 ADAPTER = BotFrameworkAdapter(SETTINGS)
+
+class AppInsightsClient():
+    def __init__(
+        self,
+        instrumentation_key: str
+    ):
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(AzureEventHandler(connection_string=f"InstrumentationKey={instrumentation_key}"))
+        LOGGER.setLevel(logging.INFO)
+
+    def track_event(
+        self,
+        name: str,
+        properties: Dict[str, object] = None,
+        measurements: Dict[str, object] = None,
+    ) -> None:
+        self.logger.info(msg=name, extra=properties)
+
+TELEMETRY_CLIENT = AppInsightsClient(CONFIG.APPINSIGHTS_INSTRUMENTATIONKEY)
+
+class TelemetryListenerMiddleware(TelemetryLoggerMiddleware):
+    def __init__(
+        self, bot: str, telemetry_client: BotTelemetryClient, log_personal_information: bool
+    ) -> None:
+        super().__init__(telemetry_client, log_personal_information)
+        self._from = bot
+        self._telemetry_client = telemetry_client
+        self._log_personal_information = log_personal_information
+
+    async def on_receive_activity(self, activity: Activity) -> None:
+        self.telemetry_client.track_event(
+            name=TelemetryLoggerConstants.BOT_MSG_RECEIVE_EVENT,
+            properties={
+                'custom_dimensions':{
+                    'from': self._from,
+                    'to': activity.from_property.name if activity.from_property else '',
+                    'conversationId': activity.conversation.id if activity.conversation else '',
+                    'activityId': activity.id,
+                    'activityText': activity.text,
+                    'activity': json.dumps(activity.as_dict(False))
+                }
+            },
+        )
+
+    async def on_send_activity(self, activity: Activity) -> None:
+        self.telemetry_client.track_event(
+            name=TelemetryLoggerConstants.BOT_MSG_SEND_EVENT,
+            properties={
+                'custom_dimensions':{
+                    'from': self._from,
+                    'to': activity.from_property.id if activity.from_property else '',
+                    'conversationId': activity.conversation.id if activity.conversation else '',
+                    'activityId': activity.id,
+                    'activityText': activity.text,
+                    'activity': json.dumps(activity.as_dict(False))
+                }
+            },
+        )
+
+telemetryLoggerMiddleware = TelemetryListenerMiddleware('EchoSkillBot', TELEMETRY_CLIENT, True)
+
+ADAPTER.use(telemetryLoggerMiddleware)
 
 # Catch-all for errors.
 async def on_error(context: TurnContext, error: Exception):
@@ -132,14 +197,14 @@ async def messages(req: Request) -> Response:
         LOGGER.exception(f"\n Exception caught on messages : {exception}", extra=PROPERTIES)
         raise exception
 
-@middleware
-async def custom_middleware(request: Request, handler):
-    activity = await request.json()
-    LOGGER.warning('RequestMiddleware', extra={'custom_dimensions': {'Environment': 'Python', 'Bot': 'EchoSkillBot', 'activity': str(activity)}})
-    response = await handler(request)
-    return response
+# @middleware
+# async def custom_middleware(request: Request, handler):
+#     activity = await request.json()
+#     LOGGER.warning('RequestMiddleware', extra={'custom_dimensions': {'Environment': 'Python', 'Bot': 'EchoSkillBot', 'activity': str(activity)}})
+#     response = await handler(request)
+#     return response
 
-APP = web.Application(middlewares=[custom_middleware])
+APP = web.Application()
 APP.router.add_post("/api/messages", messages)
 
 # simple way of exposing the manifest for dev purposes.

@@ -19,7 +19,7 @@ class DefaultConfig:
     APP_ID = os.getenv("MicrosoftAppId")
     APP_PASSWORD = os.getenv("MicrosoftAppPassword")
     SKILL_HOST_ENDPOINT = os.getenv("SkillHostEndpoint")
-    APPLICATIONINSIGHTS_INSTRUMENTATION_KEY = os.getenv("ApplicationInsightInstrumentationKey")
+    APPINSIGHTS_INSTRUMENTATIONKEY = os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")
     SKILLS = []
 
     # Callers to only those specified, '*' allows any caller.
