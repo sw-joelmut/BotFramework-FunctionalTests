@@ -14,6 +14,7 @@ variables:
   # AzureSubscription: Service Connection Name to Manage Azure resources.
   # ResourceGroup: (optional) Name of the Resource Group where the bots are deployed.
   # ResourceSuffix: (optional) Suffix to add to the resources' name to avoid collitions.
+  # SharedResourceSuffix: (optional) Suffix from shared resources pipeline.
 
   ## Bots Configuration (Define these variables in Azure)
   # BffnEchoSkillBotComposerDotNetAppId: (optional) App Id for BffnEchoSkillBotComposerDotNet bot.
@@ -29,9 +30,10 @@ variables:
   # DeployBotResourcesGuid: (optional) Deploy Bot Resources pipeline GUID.
 
   ## Internal variables
-  InternalKeyVaultName: "bffnbotkeyvault$(INTERNALRESOURCESUFFIX)"
+  InternalKeyVaultName: "bffnbotkeyvault$(INTERNALSHAREDRESOURCESUFFIX)"
   InternalResourceGroupName: $[coalesce(variables['RESOURCEGROUP'], 'bffnbots')]
   InternalResourceSuffix: $[coalesce(variables['RESOURCESUFFIX'], '')]
+  InternalSharedResourceSuffix: $[coalesce(variables['SHAREDRESOURCESUFFIX'], '')]
 
 pool:
   vmImage: "windows-2019"
@@ -61,9 +63,15 @@ stages:
               path: "$(SYSTEM.DEFAULTWORKINGDIRECTORY)/Variables/"
 
           - powershell: |
-              $deploymentBuildSuffix = (Get-Content -Path "$(SYSTEM.DEFAULTWORKINGDIRECTORY)/Variables/variables.json" | ConvertFrom-Json).deploymentBuildSuffix
-              Write-Host "Deployment Build Suffix: " $deploymentBuildSuffix
-              Write-Host "##vso[task.setvariable variable=DeploymentBuildSuffix;isOutput=true]-$deploymentBuildSuffix"
+              $deploymentResourceSuffix = (Get-Content -Path "$(SYSTEM.DEFAULTWORKINGDIRECTORY)/Variables/variables.json" | ConvertFrom-Json).deploymentResourceSuffix
+              if ($deploymentResourceSuffix) { 
+                Write-Host "Using Artifacts Deployment Resource Suffix value: '$deploymentResourceSuffix'."
+              } else {
+                $deploymentResourceSuffix = "" 
+                Write-Host "Unable to find Artifacts Deployment Resource Suffix."
+                Write-Host "Using Resource Suffix Pipeline variable: '$(INTERNALRESOURCESUFFIX)'."
+              }
+              Write-Host "##vso[task.setvariable variable=DeploymentResourceSuffix;isOutput=true]$deploymentResourceSuffix"
             displayName: "Set variables"
             name: "Set_Variables"
 
@@ -82,10 +90,9 @@ stages:
         WaterfallSkillBotPython: "$(BFFNWATERFALLSKILLBOTPYTHONAPPID)"
       azureSubscription: "$(AZURESUBSCRIPTION)"
       buildConfiguration: "$(BUILDCONFIGURATION)"
-      buildIdSuffix: $[stageDependencies.Download_Variables.Download_Variables.outputs['Set_Variables.DeploymentBuildSuffix']]
       keyVault: "$(INTERNALKEYVAULTNAME)"
       resourceGroup: "$(INTERNALRESOURCEGROUPNAME)"
-      resourceSuffix: "$(INTERNALRESOURCESUFFIX)"
+      resourceSuffix: $[coalesce(stageDependencies.Download_Variables.Download_Variables.outputs['Set_Variables.DeploymentResourceSuffix'], '$(INTERNALRESOURCESUFFIX)')]
       scenarios:
         - name: Waterfall
           dependsOn: [Download_Variables]
