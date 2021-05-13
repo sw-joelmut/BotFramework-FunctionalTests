@@ -25,6 +25,10 @@ const { MainDialog } = require('./dialogs/mainDialog');
 const { LoggerMiddleware } = require('./middleware/loggerMiddleware');
 const { TokenExchangeSkillHandler } = require('./TokenExchangeSkillHandler');
 
+// Import required services for bot telemetry
+const { ApplicationInsightsTelemetryClient, TelemetryInitializerMiddleware } = require('botbuilder-applicationinsights');
+const { TelemetryLoggerMiddleware } = require('botbuilder-core');
+
 // Load skills configuration
 const skillsConfig = new SkillsConfiguration();
 
@@ -45,6 +49,47 @@ try {
     appPassword: process.env.MicrosoftAppPassword,
     authConfig: new AuthenticationConfiguration([], allowedSkillsClaimsValidator)
   });
+
+  class TelemetryListenerMiddleware extends TelemetryLoggerMiddleware {
+    constructor(bot, telemetryClient, logPersonalInformation) {
+      super(telemetryClient, logPersonalInformation)
+      this.from = bot;
+    }
+
+    onSendActivity(activity) {
+      this.telemetryClient.trackEvent({
+        name: TelemetryLoggerMiddleware.botMsgSendEvent,
+        properties: {
+          from: this.from,
+          to: activity && activity.from ? activity.from.name : '',
+          conversationId: activity && activity.conversation ? activity.conversation.id : '',
+          activityId: activity ? activity.id : '',
+          activityText: activity ? activity.text : '',
+          activity
+        },
+      });
+    }
+
+    onReceiveActivity(activity) {
+      this.telemetryClient.trackEvent({
+        name: TelemetryLoggerMiddleware.botMsgReceiveEvent,
+        properties: {
+          from: this.from,
+          to: activity && activity.from ? activity.from.name : '',
+          conversationId: activity && activity.conversation ? activity.conversation.id : '',
+          activityId: activity ? activity.id : '',
+          activityText: activity ? activity.text : '',
+          activity
+        },
+      });
+    }
+  }
+
+  // Add telemetry middleware to the adapter middleware pipeline
+  const telemetryClient = process.env.APPINSIGHTS_INSTRUMENTATIONKEY ? new ApplicationInsightsTelemetryClient(process.env.APPINSIGHTS_INSTRUMENTATIONKEY) : new NullTelemetryClient();
+  const telemetryLoggerMiddleware = new TelemetryListenerMiddleware('WaterfallHostBot', telemetryClient, true);
+  const initializerMiddleware = new TelemetryInitializerMiddleware(telemetryLoggerMiddleware, true);
+  adapter.use(initializerMiddleware);
 
   // Use the logger middleware to log messages. The default logger argument for LoggerMiddleware is Node's console.log().
   adapter.use(new LoggerMiddleware());
