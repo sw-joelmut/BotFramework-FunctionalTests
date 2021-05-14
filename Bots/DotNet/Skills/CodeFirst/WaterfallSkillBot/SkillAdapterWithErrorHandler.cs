@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
@@ -19,16 +20,24 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot
         private readonly ConversationState _conversationState;
         private readonly ILogger _logger;
         private IBotTelemetryClient _adapterBotTelemetryClient;
+        private Dictionary<string, string> _customProperties;
 
         public SkillAdapterWithErrorHandler(IConfiguration configuration, ICredentialProvider credentialProvider, AuthenticationConfiguration authConfig, ILogger<BotFrameworkHttpAdapter> logger, ConversationState conversationState, TelemetryListenerMiddleware telemetryListenerMiddleware, IBotTelemetryClient botTelemetryClient)
             : base(configuration, credentialProvider, authConfig, logger: logger)
         {
             _conversationState = conversationState ?? throw new ArgumentNullException(nameof(conversationState));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            OnTurnError = HandleTurnError;
 
             Use(telemetryListenerMiddleware);
             _adapterBotTelemetryClient = botTelemetryClient;
+
+            _customProperties = new Dictionary<string, string>
+            {
+                { "Environment", "DotNet" },
+                { "Bot", "WaterfallSkillBot" }
+            };
+
+            OnTurnError = HandleTurnError;
 
             // Add autosave middleware for SSO. 
             Use(new SsoSaveStateMiddleware(_conversationState));
@@ -37,7 +46,8 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot
         private async Task HandleTurnError(ITurnContext turnContext, Exception exception)
         {
             // Log any leaked exception from the application.
-            _logger.LogError(exception, $"[OnTurnError] unhandled error : {exception.Message}");
+            //_logger.LogError(exception, $"[OnTurnError] unhandled error : {exception.Message}");
+            _adapterBotTelemetryClient.TrackException(new Exception($"[OnTurnError] unhandled error : {exception.Message}", exception), _customProperties);
 
             await SendErrorMessageAsync(turnContext, exception);
             await SendEoCToParentAsync(turnContext, exception);
@@ -65,7 +75,8 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Exception caught in SendErrorMessageAsync : {ex}");
+                //_logger.LogError(ex, $"Exception caught in SendErrorMessageAsync : {ex}");
+                _adapterBotTelemetryClient.TrackException(new Exception($"Exception caught in SendErrorMessageAsync : {ex.Message}", ex), _customProperties);
             }
         }
 
@@ -82,7 +93,8 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Exception caught in SendEoCToParentAsync : {ex}");
+                //_logger.LogError(ex, $"Exception caught in SendEoCToParentAsync : {ex}");
+                _adapterBotTelemetryClient.TrackException(new Exception($"Exception caught on SendEoCToParentAsync : {ex.Message}", ex), _customProperties);
             }
         }
 
@@ -97,7 +109,8 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Exception caught on attempting to Delete ConversationState : {ex}");
+                //_logger.LogError(ex, $"Exception caught on attempting to Delete ConversationState : {ex}");
+                _adapterBotTelemetryClient.TrackException(new Exception($"Exception caught on attempting to Delete ConversationState : {ex.Message}", ex), _customProperties);
             }
         }
     }

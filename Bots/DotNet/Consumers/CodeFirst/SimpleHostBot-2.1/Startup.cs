@@ -112,6 +112,15 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot21
                 app.UseHsts();
             }
 
+            app.UseExceptionHandler(options =>
+            {
+                options.Run(async context =>
+                {
+                    var ex = context.Features.Get<IExceptionHandlerFeature>();
+                    logger.LogError(ex as Exception, $"Exception caught in Startup : {ex}");
+                });
+            });
+
             app.UseDefaultFiles();
             app.UseStaticFiles();
 

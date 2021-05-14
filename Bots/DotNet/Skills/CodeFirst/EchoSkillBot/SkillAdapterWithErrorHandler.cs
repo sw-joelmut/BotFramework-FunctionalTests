@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Builder.TraceExtensions;
@@ -16,6 +17,7 @@ namespace Microsoft.BotFrameworkFunctionalTests.EchoSkillBot
     public class SkillAdapterWithErrorHandler : BotFrameworkHttpAdapter
     {
         private IBotTelemetryClient _adapterBotTelemetryClient;
+        private Dictionary<string, string> _customProperties;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SkillAdapterWithErrorHandler"/> class to handle errors.
@@ -32,12 +34,19 @@ namespace Microsoft.BotFrameworkFunctionalTests.EchoSkillBot
             Use(telemetryListenerMiddleware);
             _adapterBotTelemetryClient = botTelemetryClient;
 
+            _customProperties = new Dictionary<string, string>
+            {
+                { "Environment", "DotNet" },
+                { "Bot", "EchoSkillBot" }
+            };
+
             OnTurnError = async (turnContext, exception) =>
             {
                 try
                 {
                     // Log any leaked exception from the application.
-                    logger.LogError(exception, $"[OnTurnError] unhandled error : {exception.Message}");
+                    //logger.LogError(exception, $"[OnTurnError] unhandled error : {exception.Message}");
+                    _adapterBotTelemetryClient.TrackException(new Exception($"[OnTurnError] unhandled error : {exception.Message}", exception), _customProperties);
 
                     // Send a message to the user
                     var errorMessageText = "The skill encountered an error or bug.";
@@ -62,7 +71,8 @@ namespace Microsoft.BotFrameworkFunctionalTests.EchoSkillBot
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, $"Exception caught in SkillAdapterWithErrorHandler : {ex}");
+                    //logger.LogError(ex, $"Exception caught in SkillAdapterWithErrorHandler : {ex}");
+                    _adapterBotTelemetryClient.TrackException(new Exception($"Exception caught in SkillAdapterWithErrorHandler : {ex.Message}", ex), _customProperties);
                 }
             };
         }

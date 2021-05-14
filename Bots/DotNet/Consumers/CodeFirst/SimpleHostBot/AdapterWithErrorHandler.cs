@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Bot.Builder;
@@ -26,6 +27,7 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
         private readonly SkillHttpClient _skillClient;
         private readonly SkillsConfiguration _skillsConfig;
         private IBotTelemetryClient _adapterBotTelemetryClient;
+        private Dictionary<string, string> _customProperties;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AdapterWithErrorHandler"/> class to handle errors.
@@ -49,6 +51,12 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
             Use(telemetryListenerMiddleware);
             _adapterBotTelemetryClient = botTelemetryClient;
 
+            _customProperties = new Dictionary<string, string>
+            {
+                { "Environment", "DotNet" },
+                { "Bot", "SimpleHostBot" }
+            };
+
             OnTurnError = HandleTurnErrorAsync;
         }
 
@@ -61,7 +69,8 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
         private async Task HandleTurnErrorAsync(ITurnContext turnContext, Exception exception)
         {
             // Log any leaked exception from the application.
-            _logger.LogError(exception, $"[OnTurnError] unhandled error : {exception.Message}");
+            //_logger.LogError(exception, $"[OnTurnError] unhandled error : {exception.Message}", );
+            _adapterBotTelemetryClient.TrackException(new Exception($"[OnTurnError] unhandled error : {exception.Message}", exception), _customProperties);
 
             await SendErrorMessageAsync(turnContext, exception, default);
             await EndSkillConversationAsync(turnContext, default);
@@ -88,11 +97,6 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
                 await turnContext.SendActivityAsync($"Exception: {exception.Message}");
                 await turnContext.SendActivityAsync(exception.ToString());
 
-                _logger.LogInformation("AZURE TEST INFO");
-                _logger.LogWarning("AZURE TEST WARN");
-                _logger.LogError("AZURE TEST ERROR");
-                _logger.LogDebug("AZURE TEST DEBUG");
-
                 errorMessageText = "To continue to run this bot, please fix the bot source code.";
                 errorMessage = MessageFactory.Text(errorMessageText, errorMessageText, InputHints.ExpectingInput);
                 await turnContext.SendActivityAsync(errorMessage, cancellationToken);
@@ -102,7 +106,8 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Exception caught in SendErrorMessageAsync : {ex}");
+                //_logger.LogError(ex, $"Exception caught in SendErrorMessageAsync : {ex}");
+                _adapterBotTelemetryClient.TrackException(new Exception($"Exception caught in SendErrorMessageAsync : {ex.Message}", ex), _customProperties);
             }
         }
 
@@ -138,7 +143,8 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Exception caught on attempting to send EndOfConversation : {ex}");
+                //_logger.LogError(ex, $"Exception caught on attempting to send EndOfConversation : {ex}");
+                _adapterBotTelemetryClient.TrackException(new Exception($"Exception caught on attempting to send EndOfConversation : {ex.Message}", ex), _customProperties);
             }
         }
 
@@ -159,7 +165,8 @@ namespace Microsoft.BotFrameworkFunctionalTests.SimpleHostBot
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"Exception caught on attempting to Delete ConversationState : {ex}");
+                    //_logger.LogError(ex, $"Exception caught on attempting to Delete ConversationState : {ex}");
+                    _adapterBotTelemetryClient.TrackException(new Exception($"Exception caught on attempting to Delete ConversationState : {ex.Message}", ex), _customProperties);
                 }
             }
         }
