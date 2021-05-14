@@ -74,7 +74,7 @@ class AppInsightsClient():
         instrumentation_key: str
     ):
         self.logger = logging.getLogger(__name__)
-        self.logger.addHandler(AzureLogHandler(connection_string=f"InstrumentationKey={instrumentation_key}"))
+        self.logger.addHandler(AzureEventHandler(connection_string=f"InstrumentationKey={instrumentation_key}"))
         LOGGER.setLevel(logging.INFO)
 
     def track_event(
@@ -150,22 +150,25 @@ SKILL_HANDLER = TokenExchangeSkillHandler(
 # Listen for incoming requests on /api/messages
 async def messages(req: Request) -> Response:
     # Main bot message handler.
-    TELEMETRY_CLIENT.track_event("WaterFallHostBot in messages", Request)
+    TELEMETRY_CLIENT.track_event("WaterFallHostBot in /api/messages")
     if "application/json" in req.headers["Content-Type"]:
         body = await req.json()
     else:
         return Response(status=HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
+    TELEMETRY_CLIENT.track_event("WaterFallHostBot in messages", {'custom_dimensions':{'activity':json.dumps(body)}})
 
     activity = Activity().deserialize(body)
     auth_header = req.headers["Authorization"] if "Authorization" in req.headers else ""
 
-    TELEMETRY_CLIENT.track_event("WaterFallHostBot activity", Activity)
+    TELEMETRY_CLIENT.track_event("WaterFallHostBot activity", {'custom_dimensions':{'activity':json.dumps(activity.as_dict())}})
 
     try:
         invoke_response = await ADAPTER.process_activity(activity, auth_header, BOT.on_turn)
-        TELEMETRY_CLIENT.track_event("WaterFallHostBot Processed activity with Adapter. Invoke_response:", invoke_response)
+
         if invoke_response:
+            TELEMETRY_CLIENT.track_event("WaterFallHostBot Processed activity with Adapter. Invoke_response:", {'custom_dimensions':{'activity':json.dumps(invoke_response.as_dict())}})
             return json_response(data=invoke_response.body, status=invoke_response.status)
+        TELEMETRY_CLIENT.track_event("WaterFallHostBot Processed activity with Adapter. Invoke_response: Normal delivery mode")
         return Response(status=HTTPStatus.OK)
     except Exception as exception:
         LOGGER.exception(f"Error: {exception}")
