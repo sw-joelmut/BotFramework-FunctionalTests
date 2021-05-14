@@ -164,20 +164,22 @@ async def messages(req: Request) -> Response:
     else:
         return Response(status=HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
 
+    TELEMETRY_CLIENT.track_event("WaterfallSkillBot in messages", {'custom_dimensions':{'activity':json.dumps(body)}})
+
     activity = Activity().deserialize(body)
     auth_header = req.headers["Authorization"] if "Authorization" in req.headers else ""
 
-    TELEMETRY_CLIENT.track_event("WaterfallSkillBot in messages", {'custom_dimensions':{'activity':json.dumps(body)}})
+    TELEMETRY_CLIENT.track_event("WaterfallSkillBot activity", {'custom_dimensions':{'activity':json.dumps(activity.as_dict())}})
 
     try:
         website_hostname = os.getenv("WEBSITE_HOSTNAME")
-        TELEMETRY_CLIENT.track_event("WaterfallSkillBot website_hostname", website_hostname)
+        TELEMETRY_CLIENT.track_event(f"WaterfallSkillBot website_hostname {website_hostname}")
         if website_hostname:
             CONFIG.SERVER_URL = f"https://{website_hostname}"
         else:
             CONFIG.SERVER_URL = f"{req.scheme}://{req.host}"
 
-        TELEMETRY_CLIENT.track_event("WaterfallSkillBot CONFIG.SERVER_URL", CONFIG.SERVER_URL)
+        TELEMETRY_CLIENT.track_event(f"WaterfallSkillBot CONFIG.SERVER_URL {CONFIG.SERVER_URL}")
         response = await ADAPTER.process_activity(activity, auth_header, BOT.on_turn)
         # DeliveryMode => Expected Replies
         if response:
