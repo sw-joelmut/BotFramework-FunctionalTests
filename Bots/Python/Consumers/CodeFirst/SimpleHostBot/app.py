@@ -61,11 +61,11 @@ CREDENTIAL_PROVIDER = SimpleCredentialProvider(CONFIG.APP_ID, CONFIG.APP_PASSWOR
 CLIENT = SkillHttpClient(CREDENTIAL_PROVIDER, ID_FACTORY)
 
 LOGGER = logging.getLogger(__name__)
-LOGGER.addHandler(AzureEventHandler
+LOGGER.addHandler(AzureLogHandler
     (connection_string=f"InstrumentationKey={CONFIG.APPINSIGHTS_INSTRUMENTATIONKEY}"))
 
 ADAPTER = AdapterWithErrorHandler(
-    SETTINGS, CONFIG, CONVERSATION_STATE, LOGGER, CLIENT, SKILL_CONFIG, 
+    SETTINGS, CONFIG, CONVERSATION_STATE, LOGGER, CLIENT, SKILL_CONFIG,
 )
 
 class AppInsightsClient():
@@ -74,7 +74,7 @@ class AppInsightsClient():
         instrumentation_key: str
     ):
         self.logger = logging.getLogger(__name__)
-        self.logger.addHandler(AzureEventHandler(connection_string=f"InstrumentationKey={instrumentation_key}"))
+        self.logger.addHandler(AzureLogHandler(connection_string=f"InstrumentationKey={instrumentation_key}"))
         LOGGER.setLevel(logging.INFO)
 
     def track_event(
@@ -139,6 +139,7 @@ SKILL_HANDLER = SkillHandler(ADAPTER, BOT, ID_FACTORY, CREDENTIAL_PROVIDER, AUTH
 # Listen for incoming requests on /api/messages
 async def messages(req: Request) -> Response:
     # Main bot message handler.
+    TELEMETRY_CLIENT.track_event("SimpleHostBot in messages", Request)
     if "application/json" in req.headers["Content-Type"]:
         body = await req.json()
     else:
@@ -147,8 +148,11 @@ async def messages(req: Request) -> Response:
     activity = Activity().deserialize(body)
     auth_header = req.headers["Authorization"] if "Authorization" in req.headers else ""
 
+    TELEMETRY_CLIENT.track_event("SimpleHostBot activity", Activity)
+
     try:
         await ADAPTER.process_activity(activity, auth_header, BOT.on_turn)
+        TELEMETRY_CLIENT.track_event("SimpleHostBot Processed activity with Adapter", BOT)
         return Response(status=201)
     except Exception as exception:
         LOGGER.exception(f"Error: {exception}")

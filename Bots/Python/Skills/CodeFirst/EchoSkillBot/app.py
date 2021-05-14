@@ -43,7 +43,7 @@ SETTINGS = BotFrameworkAdapterSettings(
 )
 
 LOGGER = logging.getLogger(__name__)
-LOGGER.addHandler(AzureEventHandler
+LOGGER.addHandler(AzureLogHandler
     (connection_string=f"InstrumentationKey={CONFIG.APPINSIGHTS_INSTRUMENTATIONKEY}"))
 PROPERTIES = {'custom_dimensions': {'Environment': 'Python', 'Bot': 'EchoSkillBot'}}
 
@@ -55,7 +55,7 @@ class AppInsightsClient():
         instrumentation_key: str
     ):
         self.logger = logging.getLogger(__name__)
-        self.logger.addHandler(AzureEventHandler(connection_string=f"InstrumentationKey={instrumentation_key}"))
+        self.logger.addHandler(AzureLogHandler(connection_string=f"InstrumentationKey={instrumentation_key}"))
         LOGGER.setLevel(logging.INFO)
 
     def track_event(
@@ -176,6 +176,7 @@ BOT = EchoBot()
 # Listen for incoming requests on /api/messages
 async def messages(req: Request) -> Response:
     # Main bot message handler.
+    TELEMETRY_CLIENT.track_event("EchoSkillBot in messages", Request)
     if "application/json" in req.headers["Content-Type"]:
         body = await req.json()
     else:
@@ -184,11 +185,15 @@ async def messages(req: Request) -> Response:
     activity = Activity().deserialize(body)
     auth_header = req.headers["Authorization"] if "Authorization" in req.headers else ""
 
+    TELEMETRY_CLIENT.track_event("EchoSkillBot activity", Activity)
+
     try:
         response = await ADAPTER.process_activity(activity, auth_header, BOT.on_turn)
+        TELEMETRY_CLIENT.track_event("EchoSkillBot Processed activity with Adapter. response:", response)
         # DeliveryMode => Expected Replies
         if response:
             body = json.dumps(response.body)
+            TELEMETRY_CLIENT.track_event("EchoSkillBot response body", body)
             return Response(status=response.status, body=body)
 
         # DeliveryMode => Normal

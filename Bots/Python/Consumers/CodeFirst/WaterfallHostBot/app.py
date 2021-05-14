@@ -53,7 +53,7 @@ CREDENTIAL_PROVIDER = SimpleCredentialProvider(CONFIG.APP_ID, CONFIG.APP_PASSWOR
 CLIENT = SkillHttpClient(CREDENTIAL_PROVIDER, ID_FACTORY)
 
 LOGGER = logging.getLogger(__name__)
-LOGGER.addHandler(AzureEventHandler
+LOGGER.addHandler(AzureLogHandler
     (connection_string=f"InstrumentationKey={CONFIG.APPINSIGHTS_INSTRUMENTATIONKEY}"))
 
 # Whitelist skills from SKILLS_CONFIG
@@ -74,7 +74,7 @@ class AppInsightsClient():
         instrumentation_key: str
     ):
         self.logger = logging.getLogger(__name__)
-        self.logger.addHandler(AzureEventHandler(connection_string=f"InstrumentationKey={instrumentation_key}"))
+        self.logger.addHandler(AzureLogHandler(connection_string=f"InstrumentationKey={instrumentation_key}"))
         LOGGER.setLevel(logging.INFO)
 
     def track_event(
@@ -150,6 +150,7 @@ SKILL_HANDLER = TokenExchangeSkillHandler(
 # Listen for incoming requests on /api/messages
 async def messages(req: Request) -> Response:
     # Main bot message handler.
+    TELEMETRY_CLIENT.track_event("WaterFallHostBot in messages", Request)
     if "application/json" in req.headers["Content-Type"]:
         body = await req.json()
     else:
@@ -158,10 +159,17 @@ async def messages(req: Request) -> Response:
     activity = Activity().deserialize(body)
     auth_header = req.headers["Authorization"] if "Authorization" in req.headers else ""
 
-    invoke_response = await ADAPTER.process_activity(activity, auth_header, BOT.on_turn)
-    if invoke_response:
-        return json_response(data=invoke_response.body, status=invoke_response.status)
-    return Response(status=HTTPStatus.OK)
+    TELEMETRY_CLIENT.track_event("WaterFallHostBot activity", Activity)
+
+    try:
+        invoke_response = await ADAPTER.process_activity(activity, auth_header, BOT.on_turn)
+        TELEMETRY_CLIENT.track_event("WaterFallHostBot Processed activity with Adapter. Invoke_response:", invoke_response)
+        if invoke_response:
+            return json_response(data=invoke_response.body, status=invoke_response.status)
+        return Response(status=HTTPStatus.OK)
+    except Exception as exception:
+        LOGGER.exception(f"Error: {exception}")
+        raise exception
 
 # @middleware
 # async def custom_middleware(request: Request, handler):
