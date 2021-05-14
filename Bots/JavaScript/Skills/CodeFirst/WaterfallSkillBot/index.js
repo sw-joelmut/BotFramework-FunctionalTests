@@ -176,8 +176,11 @@ try {
   server.get('/images/*', restify.plugins.serveStatic({ directory: './images', appendRequestPath: false }));
 
   // Listen for incoming requests.
-  server.post('/api/messages', (req, res) => {
+  server.post('/api/messages', async (req, res) => {
+    const request = await parseRequest(req);
+    telemetryClient.trackEvent({ name: 'WaterfallSkillBot in /api/messages', properties: { ...properties, activity: request } });
     adapter.processActivity(req, res, async (context) => {
+      telemetryClient.trackEvent({ name: 'WaterfallSkillBot in /api/messages processActivity', properties: { ...properties, activity: context.activity } });
       // Route to main dialog.
       await bot.run(context);
     });
@@ -196,6 +199,8 @@ try {
   const handler = new SkillHandler(adapter, bot, conversationIdFactory, credentialProvider, authConfig);
   server.post('/api/skills/v3/conversations/:conversationId/activities/:activityId', async (req, res) => {
     try {
+      const request = await parseRequest(req);
+      telemetryClient.trackEvent({ name: 'WaterfallSkillBot in /api/skills/v3/conversations', properties: { ...properties, activity: request } });
       const authHeader = req.headers.authorization || req.headers.Authorization || '';
       const activity = await ChannelServiceRoutes.readActivity(req);
       const ref = await handler.conversationIdFactory.getSkillConversationReference(req.params.conversationId);
@@ -203,6 +208,7 @@ try {
 
       const response = await new Promise(resolve => {
         return adapter.continueConversation(ref.conversationReference, ref.oAuthScope, async (context) => {
+          telemetryClient.trackEvent({ name: 'WaterfallSkillBot in /api/skills/v3/conversations adapter.continueConversation', properties: { ...properties, activity: context.activity } });
           context.turnState.set(adapter.BotIdentityKey, claimsIdentity);
           context.turnState.set(adapter.SkillConversationReferenceKey, ref);
 
@@ -214,6 +220,7 @@ try {
             resolve(await bot.run(context));
           }
 
+          telemetryClient.trackEvent({ name: 'WaterfallSkillBot in /api/skills/v3/conversations context.sendActivity', properties: { ...properties, activity: newActivity } });
           resolve(await context.sendActivity(newActivity));
         });
       });
@@ -267,30 +274,30 @@ try {
     res.end();
   });
 
-  // function parseRequest(req) {
-  //   return new Promise((resolve, reject) => {
-  //     if (req.body) {
-  //       try {
-  //         resolve(req.body);
-  //       } catch (err) {
-  //         reject(err);
-  //       }
-  //     } else {
-  //       let requestData = '';
-  //       req.on('data', (chunk) => {
-  //         requestData += chunk;
-  //       });
-  //       req.on('end', () => {
-  //         try {
-  //           req.body = JSON.parse(requestData);
-  //           resolve(req.body);
-  //         } catch (err) {
-  //           reject(err);
-  //         }
-  //       });
-  //     }
-  //   });
-  // }
+  function parseRequest(req) {
+    return new Promise((resolve, reject) => {
+      if (req.body) {
+        try {
+          resolve(req.body);
+        } catch (err) {
+          reject(err);
+        }
+      } else {
+        let requestData = '';
+        req.on('data', (chunk) => {
+          requestData += chunk;
+        });
+        req.on('end', () => {
+          try {
+            req.body = JSON.parse(requestData);
+            resolve(req.body);
+          } catch (err) {
+            reject(err);
+          }
+        });
+      }
+    });
+  }
 
   // server.use(async (req, res, next) => {
   //   const request = await parseRequest(req);

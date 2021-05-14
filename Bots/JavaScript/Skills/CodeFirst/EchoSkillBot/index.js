@@ -140,36 +140,40 @@ try {
   const myBot = new EchoBot();
 
   // Listen for incoming requests.
-  server.post('/api/messages', (req, res) => {
+  server.post('/api/messages', async (req, res) => {
+    const request = await parseRequest(req);
+    telemetryClient.trackEvent({ name: 'EchoSkillBot in /api/messages', properties: { ...properties, activity: request } });
     adapter.processActivity(req, res, async (context) => {
+      telemetryClient.trackEvent({ name: 'EchoSkillBot in /api/messages processActivity', properties: { ...properties, activity: context.activity } });
       // Route to main dialog.
       await myBot.run(context);
     });
   });
-  // function parseRequest(req) {
-  //   return new Promise((resolve, reject) => {
-  //     if (req.body) {
-  //       try {
-  //         resolve(req.body);
-  //       } catch (err) {
-  //         reject(err);
-  //       }
-  //     } else {
-  //       let requestData = '';
-  //       req.on('data', (chunk) => {
-  //         requestData += chunk;
-  //       });
-  //       req.on('end', () => {
-  //         try {
-  //           req.body = JSON.parse(requestData);
-  //           resolve(req.body);
-  //         } catch (err) {
-  //           reject(err);
-  //         }
-  //       });
-  //     }
-  //   });
-  // }
+
+  function parseRequest(req) {
+    return new Promise((resolve, reject) => {
+      if (req.body) {
+        try {
+          resolve(req.body);
+        } catch (err) {
+          reject(err);
+        }
+      } else {
+        let requestData = '';
+        req.on('data', (chunk) => {
+          requestData += chunk;
+        });
+        req.on('end', () => {
+          try {
+            req.body = JSON.parse(requestData);
+            resolve(req.body);
+          } catch (err) {
+            reject(err);
+          }
+        });
+      }
+    });
+  }
 
   // server.use(async (req, res, next) => {
   //   const request = await parseRequest(req);
