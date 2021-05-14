@@ -220,8 +220,11 @@ try {
   });
 
   // Listen for incoming activities and route them to your bot main dialog.
-  server.post('/api/messages', (req, res) => {
+  server.post('/api/messages', async (req, res) => {
+    const request = await parseRequest(req);
+    telemetryClient.trackEvent({ name: 'WaterfallHostBot in /api/messages', properties: { ...properties, activity: request } });
     adapter.processActivity(req, res, async (context) => {
+      telemetryClient.trackEvent({ name: 'WaterfallHostBot in /api/messages processActivity', properties: { ...properties, activity: context.activity } });
       // route to bot activity handler.
       await bot.run(context);
     });
@@ -250,30 +253,30 @@ try {
     });
   });
 
-  // function parseRequest(req) {
-  //   return new Promise((resolve, reject) => {
-  //     if (req.body) {
-  //       try {
-  //         resolve(req.body);
-  //       } catch (err) {
-  //         reject(err);
-  //       }
-  //     } else {
-  //       let requestData = '';
-  //       req.on('data', (chunk) => {
-  //         requestData += chunk;
-  //       });
-  //       req.on('end', () => {
-  //         try {
-  //           req.body = JSON.parse(requestData);
-  //           resolve(req.body);
-  //         } catch (err) {
-  //           reject(err);
-  //         }
-  //       });
-  //     }
-  //   });
-  // }
+  function parseRequest(req) {
+    return new Promise((resolve, reject) => {
+      if (req.body) {
+        try {
+          resolve(req.body);
+        } catch (err) {
+          reject(err);
+        }
+      } else {
+        let requestData = '';
+        req.on('data', (chunk) => {
+          requestData += chunk;
+        });
+        req.on('end', () => {
+          try {
+            req.body = JSON.parse(requestData);
+            resolve(req.body);
+          } catch (err) {
+            reject(err);
+          }
+        });
+      }
+    });
+  }
 
   // server.use(async (req, res, next) => {
   //   const request = await parseRequest(req);
