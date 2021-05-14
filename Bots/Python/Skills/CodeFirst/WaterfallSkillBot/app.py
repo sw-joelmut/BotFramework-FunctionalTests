@@ -184,7 +184,7 @@ async def messages(req: Request) -> Response:
         # DeliveryMode => Expected Replies
         if response:
             TELEMETRY_CLIENT.track_event("WaterfallSkillBot Processed activity with Adapter. response:",
-                                         {'custom_dimensions': {'activity': json.dumps(response.as_dict())}})
+                                         {'custom_dimensions': {'activity': json.dumps(response.body.as_dict())}})
             return json_response(data=response.body, status=response.status)
         TELEMETRY_CLIENT.track_event(
             "WaterfallSkillBot Processed activity with Adapter. response: Normal delivery mode")

@@ -193,7 +193,7 @@ async def messages(req: Request) -> Response:
         # DeliveryMode => Expected Replies
         if response:
             TELEMETRY_CLIENT.track_event("EchoSkillBot Processed activity with Adapter. response:",
-                                         {'custom_dimensions': {'activity': json.dumps(response.as_dict())}})
+                                         {'custom_dimensions': {'activity': json.dumps(response.body.as_dict())}})
             body = json.dumps(response.body)
             return Response(status=response.status, body=body)
         TELEMETRY_CLIENT.track_event(
