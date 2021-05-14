@@ -166,7 +166,7 @@ async def messages(req: Request) -> Response:
         invoke_response = await ADAPTER.process_activity(activity, auth_header, BOT.on_turn)
 
         if invoke_response:
-            TELEMETRY_CLIENT.track_event("WaterFallHostBot Processed activity with Adapter. Invoke_response:", {'custom_dimensions':{'activity':json.dumps(invoke_response.body.as_dict())}})
+            TELEMETRY_CLIENT.track_event("WaterFallHostBot Processed activity with Adapter. Invoke_response:", {'custom_dimensions':{'activity':json.dumps(invoke_response.body)}})
             return json_response(data=invoke_response.body, status=invoke_response.status)
         TELEMETRY_CLIENT.track_event("WaterFallHostBot Processed activity with Adapter. Invoke_response: Normal delivery mode")
         return Response(status=HTTPStatus.OK)
