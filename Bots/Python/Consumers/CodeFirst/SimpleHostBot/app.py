@@ -74,7 +74,7 @@ class AppInsightsClient():
         instrumentation_key: str
     ):
         self.logger = logging.getLogger(__name__)
-        self.logger.addHandler(AzureLogHandler(connection_string=f"InstrumentationKey={instrumentation_key}"))
+        self.logger.addHandler(AzureEventHandler(connection_string=f"InstrumentationKey={instrumentation_key}"))
         LOGGER.setLevel(logging.INFO)
 
     def track_event(
@@ -139,23 +139,24 @@ SKILL_HANDLER = SkillHandler(ADAPTER, BOT, ID_FACTORY, CREDENTIAL_PROVIDER, AUTH
 # Listen for incoming requests on /api/messages
 async def messages(req: Request) -> Response:
     # Main bot message handler.
-    TELEMETRY_CLIENT.track_event("SimpleHostBot in messages", Request)
+    TELEMETRY_CLIENT.track_event("SimpleHostBot in /api/messages")
     if "application/json" in req.headers["Content-Type"]:
         body = await req.json()
     else:
         return Response(status=415)
 
+    TELEMETRY_CLIENT.track_event("SimpleHostBot in messages", {'custom_dimensions': {'activity': json.dumps(body)}})
+
     activity = Activity().deserialize(body)
     auth_header = req.headers["Authorization"] if "Authorization" in req.headers else ""
 
-    TELEMETRY_CLIENT.track_event("SimpleHostBot activity", Activity)
+    TELEMETRY_CLIENT.track_event("SimpleHostBot activity", {'custom_dimensions':{'activity':json.dumps(activity.as_dict())}})
 
     try:
         await ADAPTER.process_activity(activity, auth_header, BOT.on_turn)
-        TELEMETRY_CLIENT.track_event("SimpleHostBot Processed activity with Adapter", BOT)
         return Response(status=201)
     except Exception as exception:
-        LOGGER.exception(f"Error: {exception}")
+        LOGGER.exception(f"Error: {exception}", extra={'custom_dimensions': {'Environment': 'Python', 'Bot': 'SimpleHostBot'}})
         raise exception
 
 # MIDDLEWARE = CustomMiddleware(LOGGER)

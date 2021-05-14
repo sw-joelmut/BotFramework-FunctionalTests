@@ -55,7 +55,7 @@ class AppInsightsClient():
         instrumentation_key: str
     ):
         self.logger = logging.getLogger(__name__)
-        self.logger.addHandler(AzureLogHandler(connection_string=f"InstrumentationKey={instrumentation_key}"))
+        self.logger.addHandler(AzureEventHandler(connection_string=f"InstrumentationKey={instrumentation_key}"))
         LOGGER.setLevel(logging.INFO)
 
     def track_event(
@@ -176,26 +176,28 @@ BOT = EchoBot()
 # Listen for incoming requests on /api/messages
 async def messages(req: Request) -> Response:
     # Main bot message handler.
-    TELEMETRY_CLIENT.track_event("EchoSkillBot in messages", Request)
+    TELEMETRY_CLIENT.track_event("EchoSkillBot in /api/messages")
     if "application/json" in req.headers["Content-Type"]:
         body = await req.json()
     else:
         return Response(status=HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
+    TELEMETRY_CLIENT.track_event("EchoSkillBot in messages", {'custom_dimensions': {'activity': json.dumps(body)}})
 
     activity = Activity().deserialize(body)
     auth_header = req.headers["Authorization"] if "Authorization" in req.headers else ""
 
-    TELEMETRY_CLIENT.track_event("EchoSkillBot activity", Activity)
-
+    TELEMETRY_CLIENT.track_event("EchoSkillBot activity",
+                                 {'custom_dimensions': {'activity': json.dumps(activity.as_dict())}})
     try:
         response = await ADAPTER.process_activity(activity, auth_header, BOT.on_turn)
-        TELEMETRY_CLIENT.track_event("EchoSkillBot Processed activity with Adapter. response:", response)
         # DeliveryMode => Expected Replies
         if response:
+            TELEMETRY_CLIENT.track_event("EchoSkillBot Processed activity with Adapter. response:",
+                                         {'custom_dimensions': {'activity': json.dumps(response.as_dict())}})
             body = json.dumps(response.body)
-            TELEMETRY_CLIENT.track_event("EchoSkillBot response body", body)
             return Response(status=response.status, body=body)
-
+        TELEMETRY_CLIENT.track_event(
+            "EchoSkillBot Processed activity with Adapter. response: Normal delivery mode")
         # DeliveryMode => Normal
         return Response(status=HTTPStatus.CREATED)
     except Exception as exception:

@@ -77,7 +77,7 @@ class AppInsightsClient():
         instrumentation_key: str
     ):
         self.logger = logging.getLogger(__name__)
-        self.logger.addHandler(AzureLogHandler(connection_string=f"InstrumentationKey={instrumentation_key}"))
+        self.logger.addHandler(AzureEventHandler(connection_string=f"InstrumentationKey={instrumentation_key}"))
         LOGGER.setLevel(logging.INFO)
 
     def track_event(
@@ -158,7 +158,7 @@ SKILL_HANDLER = SkillHandler(
 # Listen for incoming requests on /api/messages
 async def messages(req: Request) -> Response:
     # Main bot message handler.
-    TELEMETRY_CLIENT.track_event("WaterfallSkillBot in messages", Request)
+    TELEMETRY_CLIENT.track_event("WaterfallSkillBot in /api/messages")
     if "application/json" in req.headers["Content-Type"]:
         body = await req.json()
     else:
@@ -167,7 +167,7 @@ async def messages(req: Request) -> Response:
     activity = Activity().deserialize(body)
     auth_header = req.headers["Authorization"] if "Authorization" in req.headers else ""
 
-    TELEMETRY_CLIENT.track_event("WaterfallSkillBot activity", Activity)
+    TELEMETRY_CLIENT.track_event("WaterfallSkillBot in messages", {'custom_dimensions':{'activity':json.dumps(body)}})
 
     try:
         website_hostname = os.getenv("WEBSITE_HOSTNAME")
@@ -179,16 +179,18 @@ async def messages(req: Request) -> Response:
 
         TELEMETRY_CLIENT.track_event("WaterfallSkillBot CONFIG.SERVER_URL", CONFIG.SERVER_URL)
         response = await ADAPTER.process_activity(activity, auth_header, BOT.on_turn)
-        TELEMETRY_CLIENT.track_event("WaterfallSkillBot Processed activity with Adapter. response:", response)
         # DeliveryMode => Expected Replies
         if response:
-            TELEMETRY_CLIENT.track_event("WaterfallSkillBot response body", body)
+            TELEMETRY_CLIENT.track_event("WaterfallSkillBot Processed activity with Adapter. response:",
+                                         {'custom_dimensions': {'activity': json.dumps(response.as_dict())}})
             return json_response(data=response.body, status=response.status)
-
+        TELEMETRY_CLIENT.track_event(
+            "WaterfallSkillBot Processed activity with Adapter. response: Normal delivery mode")
         # DeliveryMode => Normal
         return Response(status=HTTPStatus.CREATED)
     except Exception as exception:
-        LOGGER.exception(f"Exception caught on messages: {exception}")
+        LOGGER.exception(f"Exception caught on messages: {exception}",
+                         extra={'custom_dimensions': {'Environment': 'Python', 'Bot': 'WaterfallSkillBot'}})
         raise exception
 
 
@@ -221,7 +223,8 @@ async def notify(req: Request) -> Response:
             continuation_parameters.oauth_scope,
         )
     except Exception as err:
-        LOGGER.exception(f"Exception caught on notify: {err}")
+        LOGGER.exception(f"Exception caught on notify: {err}",
+                         extra={'custom_dimensions': {'Environment': 'Python', 'Bot': 'WaterfallSkillBot'}})
         error = err
 
     return Response(

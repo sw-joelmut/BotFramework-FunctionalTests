@@ -171,7 +171,7 @@ async def messages(req: Request) -> Response:
         TELEMETRY_CLIENT.track_event("WaterFallHostBot Processed activity with Adapter. Invoke_response: Normal delivery mode")
         return Response(status=HTTPStatus.OK)
     except Exception as exception:
-        LOGGER.exception(f"Error: {exception}")
+        LOGGER.exception(f"Error: {exception}", extra={'custom_dimensions': {'Environment': 'Python', 'Bot': 'WaterfallHostBot'}})
         raise exception
 
 # @middleware
