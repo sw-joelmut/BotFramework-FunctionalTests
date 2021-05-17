@@ -32,6 +32,8 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot.Controllers
         {
             try
             {
+                // Type (Received, Sent), Host, Skill, ConversationId, ActivityId, Activity
+                //Logger("Received", Host, Skill, ConversationId, ActivityId, ActivityText, ActivityTimestamp, Activity)
                 return base.ReplyToActivityAsync(conversationId, activityId, activity);
             }
             catch (Exception ex)

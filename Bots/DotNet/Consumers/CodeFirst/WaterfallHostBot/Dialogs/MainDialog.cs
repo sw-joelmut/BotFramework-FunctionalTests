@@ -16,6 +16,7 @@ using Microsoft.Bot.Schema;
 using Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot.Dialogs.Sso;
 using Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot.Skills;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot.Dialogs
@@ -34,12 +35,14 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot.Dialogs
         private readonly string _selectedSkillKey = $"{typeof(MainDialog).FullName}.SelectedSkillKey";
         private readonly SkillsConfiguration _skillsConfig;
         private readonly IConfiguration _configuration;
+        private readonly IBotTelemetryClient _logger;
 
         // Dependency injection uses this constructor to instantiate MainDialog.
-        public MainDialog(ConversationState conversationState, SkillConversationIdFactoryBase conversationIdFactory, SkillHttpClient skillClient, SkillsConfiguration skillsConfig, IConfiguration configuration)
+        public MainDialog(ConversationState conversationState, SkillConversationIdFactoryBase conversationIdFactory, SkillHttpClientListener skillClient, SkillsConfiguration skillsConfig, IConfiguration configuration, IBotTelemetryClient logger)
             : base(nameof(MainDialog))
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _logger = logger;
 
             var botId = configuration.GetSection(MicrosoftAppCredentials.MicrosoftAppIdKey)?.Value;
 
@@ -304,7 +307,7 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot.Dialogs
         }
 
         // Helper method that creates and adds SkillDialog instances for the configured skills.
-        private void AddSkillDialogs(ConversationState conversationState, SkillConversationIdFactoryBase conversationIdFactory, SkillHttpClient skillClient, SkillsConfiguration skillsConfig, string botId)
+        private void AddSkillDialogs(ConversationState conversationState, SkillConversationIdFactoryBase conversationIdFactory, SkillHttpClientListener skillClient, SkillsConfiguration skillsConfig, string botId)
         {
             foreach (var skillInfo in _skillsConfig.Skills.Values)
             {
@@ -320,7 +323,7 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot.Dialogs
                 };
 
                 // Add a SkillDialog for the selected skill.
-                AddDialog(new SkillDialog(skillDialogOptions, skillInfo.Id));
+                AddDialog(new SkillDialogListener(skillDialogOptions, skillInfo.Id, _logger));
             }
         }
 

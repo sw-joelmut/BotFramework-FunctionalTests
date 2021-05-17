@@ -58,7 +58,8 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot
             // Register the skills conversation ID factory, the client and the request handler.
             services.AddSingleton<SkillConversationIdFactoryBase, SkillConversationIdFactory>();
             services.AddHttpClient<SkillHttpClient>();
-            
+            services.AddHttpClient<SkillHttpClientListener>();
+
             //services.AddSingleton<ChannelServiceHandler, SkillHandler>();
             services.AddSingleton<ChannelServiceHandler, TokenExchangeSkillHandler>();
 
