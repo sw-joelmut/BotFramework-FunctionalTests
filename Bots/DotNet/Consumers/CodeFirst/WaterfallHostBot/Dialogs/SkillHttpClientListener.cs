@@ -249,14 +249,14 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot.Dialogs
                     httpRequestMessage.Content = jsonContent;
                     using (var response = await HttpClient.SendAsync(httpRequestMessage, cancellationToken).ConfigureAwait(false))
                     {
+                        var content = response.Content != null ? await response.Content.ReadAsStringAsync().ConfigureAwait(false) : null;
+
                         var responseContentAsync = string.Empty;
-                        var isContentNull = response.Content != null;
-                        if (isContentNull)
+                        var isContentNotNull = response.Content != null;
+                        if (isContentNotNull)
                         {
                             responseContentAsync = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                         }
-
-                        var content = isContentNull ? responseContentAsync : null;
 
                         _logger.TrackEvent("HttpClient.SendAsync-SecurePostActivityAsync", new Dictionary<string, string>
                         {
@@ -267,7 +267,7 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot.Dialogs
                             { "httpRequestMessage",  JsonConvert.SerializeObject(httpRequestMessage) },
                             { "content", content },
                             { "responseContent",  JsonConvert.SerializeObject(response.Content) },
-                            { "isContentNull",  isContentNull.ToString() },
+                            { "isContentNull",  isContentNotNull.ToString() },
                             { "responseContentAsync", responseContentAsync }
                         });
 
