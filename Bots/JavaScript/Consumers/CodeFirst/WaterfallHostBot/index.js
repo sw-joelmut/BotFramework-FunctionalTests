@@ -24,6 +24,7 @@ const { allowedSkillsClaimsValidator } = require('./authentication/allowedSkills
 const { MainDialog } = require('./dialogs/mainDialog');
 const { LoggerMiddleware } = require('./middleware/loggerMiddleware');
 const { TokenExchangeSkillHandler } = require('./TokenExchangeSkillHandler');
+const { SkillHttpClientListener } = require('./skillHttpClientListener');
 
 // Import required services for bot telemetry
 const { ApplicationInsightsTelemetryClient, TelemetryInitializerMiddleware } = require('botbuilder-applicationinsights');
@@ -203,7 +204,7 @@ try {
   const credentialProvider = new SimpleCredentialProvider(process.env.MicrosoftAppId, process.env.MicrosoftAppPassword);
 
   // Create the skill client
-  const skillClient = new SkillHttpClient(credentialProvider, conversationIdFactory);
+  const skillClient = new SkillHttpClientListener(telemetryClient, credentialProvider, conversationIdFactory);
 
   // Create the main dialog.
   const mainDialog = new MainDialog(conversationState, skillsConfig, skillClient, conversationIdFactory);
