@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+from Consumers.CodeFirst.WaterfallHostBot.dialogs.skill_http_client_listener import SkillHttpClientListener
 from http import HTTPStatus
 import json
 from typing import Dict
@@ -23,7 +24,7 @@ from botbuilder.core.integration import (
 from botbuilder.core.telemetry_logger_constants import TelemetryLoggerConstants
 from botbuilder.core.telemetry_logger_middleware import TelemetryLoggerMiddleware
 from botbuilder.schema import Activity
-from botbuilder.integration.aiohttp.skills import SkillHttpClient
+# from botbuilder.integration.aiohttp.skills import SkillHttpClient
 from botframework.connector.auth import (
     AuthenticationConfiguration,
     SimpleCredentialProvider,
@@ -50,7 +51,7 @@ CONVERSATION_STATE = ConversationState(MEMORY)
 ID_FACTORY = SkillConversationIdFactory(MEMORY)
 
 CREDENTIAL_PROVIDER = SimpleCredentialProvider(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
-CLIENT = SkillHttpClient(CREDENTIAL_PROVIDER, ID_FACTORY)
+CLIENT = SkillHttpClientListener(CREDENTIAL_PROVIDER, ID_FACTORY)
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(AzureLogHandler
@@ -130,7 +131,7 @@ telemetryLoggerMiddleware = TelemetryListenerMiddleware('WaterfallHostBot', TELE
 
 ADAPTER.use(telemetryLoggerMiddleware)
 
-DIALOG = MainDialog(CONVERSATION_STATE, ID_FACTORY, CLIENT, SKILL_CONFIG, CONFIG)
+DIALOG = MainDialog(CONVERSATION_STATE, ID_FACTORY, CLIENT, SKILL_CONFIG, CONFIG, TELEMETRY_CLIENT)
 
 # Create the Bot
 BOT = RootBot(CONVERSATION_STATE, DIALOG)
@@ -145,7 +146,6 @@ SKILL_HANDLER = TokenExchangeSkillHandler(
     CREDENTIAL_PROVIDER,
     AUTH_CONFIG,
 )
-
 
 # Listen for incoming requests on /api/messages
 async def messages(req: Request) -> Response:

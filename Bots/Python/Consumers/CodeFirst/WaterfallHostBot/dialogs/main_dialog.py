@@ -25,12 +25,16 @@ from botbuilder.dialogs.skills import (
 from botbuilder.core import ConversationState, MessageFactory, TurnContext
 from botbuilder.core.skills import ConversationIdFactoryBase
 from botbuilder.schema import Activity, ActivityTypes, InputHints, DeliveryModes
-from botbuilder.integration.aiohttp.skills import SkillHttpClient
+# from botbuilder.integration.aiohttp.skills import SkillHttpClient
 
 from skills_configuration import SkillsConfiguration, DefaultConfig
 
 from dialogs.tangent_dialog import TangentDialog
 from dialogs.sso.sso_dialog import SsoDialog
+
+from Consumers.CodeFirst.WaterfallHostBot.app import AppInsightsClient
+from Consumers.CodeFirst.WaterfallHostBot.dialogs.skill_http_client_listener import SkillHttpClientListener
+from Consumers.CodeFirst.WaterfallHostBot.dialogs.skill_dialog_listener import SkillDialogListener
 
 SSO_DIALOG_PREFIX = "Sso"
 ACTIVE_SKILL_PROPERTY_NAME = "MainDialog.ActiveSkillProperty"
@@ -49,9 +53,10 @@ class MainDialog(ComponentDialog):
         self,
         conversation_state: ConversationState,
         conversation_id_factory: ConversationIdFactoryBase,
-        skill_client: SkillHttpClient,
+        skill_client: SkillHttpClientListener,
         skills_config: SkillsConfiguration,
         configuration: DefaultConfig,
+        telemetry_client: AppInsightsClient
     ):
         super().__init__(MainDialog.__name__)
 
@@ -128,6 +133,8 @@ class MainDialog(ComponentDialog):
                 ],
             )
         )
+
+        self._telemetry_client = telemetry_client
 
         self.initial_dialog_id = WaterfallDialog.__name__
 
@@ -393,7 +400,7 @@ class MainDialog(ComponentDialog):
         self,
         conversation_state: ConversationState,
         conversation_id_factory: ConversationIdFactoryBase,
-        skill_client: SkillHttpClient,
+        skill_client: SkillHttpClientListener,
         skills_config: SkillsConfiguration,
         bot_id: str,
     ):
@@ -413,7 +420,7 @@ class MainDialog(ComponentDialog):
             )
 
             # Add a SkillDialog for the selected skill.
-            self.add_dialog(SkillDialog(skill_dialog_options, skill_info.id))
+            self.add_dialog(SkillDialogListener(skill_dialog_options, skill_info.id, self._telemetry_client))
 
     def _create_begin_activity(
         self, context: TurnContext, skill_id: str, selected_option: str
