@@ -233,7 +233,7 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot.Dialogs
 
             var skillInfo = DialogOptions.Skill;
 
-            TelemetryClient.TrackEvent("BeforePostActivityAsync", new Dictionary<string, string>
+            _logger.TrackEvent("BeforePostActivityAsync", new Dictionary<string, string>
             {
                 { "dialogOptions", JsonConvert.SerializeObject(DialogOptions) },
                 { "skillInfo", JsonConvert.SerializeObject(skillInfo) },
@@ -243,7 +243,7 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot.Dialogs
 
             var response = await DialogOptions.SkillClient.PostActivityAsync<ExpectedReplies>(DialogOptions.BotId, skillInfo.AppId, skillInfo.SkillEndpoint, DialogOptions.SkillHostEndpoint, skillConversationId, activity, cancellationToken).ConfigureAwait(false);
 
-            TelemetryClient.TrackEvent("AfterPostActivityAsync", new Dictionary<string, string>
+            _logger.TrackEvent("AfterPostActivityAsync", new Dictionary<string, string>
             {
                 { "response", JsonConvert.SerializeObject(response) },
                 { "dialogOptions", JsonConvert.SerializeObject(DialogOptions) },
