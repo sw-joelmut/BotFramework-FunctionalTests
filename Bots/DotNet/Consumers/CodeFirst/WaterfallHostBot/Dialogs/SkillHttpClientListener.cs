@@ -256,16 +256,15 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot.Dialogs
                     // Redirect the output stream of the child process.
                     p.StartInfo.UseShellExecute = false;
                     p.StartInfo.RedirectStandardOutput = true;
-                    p.StartInfo.FileName = "cmd.exe";
-                    p.StartInfo.Arguments = "/C netstat -a -n -o";
+                    p.StartInfo.FileName = "powershell.exe";
+                    p.StartInfo.Arguments = "netstat -a -n -o";
                     p.Start();
 
                     // Read the output stream first and then wait.
                     string output = p.StandardOutput.ReadToEnd();
                     p.WaitForExit();
-                    Console.WriteLine(output);
 
-                    _logger.TrackEvent("HttpClient.SendAsync-SecurePostActivityAsync", new Dictionary<string, string>
+                    _logger.TrackEvent("Ports-SecurePostActivityAsync", new Dictionary<string, string>
                         {
                             { "ports", output },
                             { "token", token },
@@ -273,6 +272,8 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot.Dialogs
                             { "jsonContent", JsonConvert.SerializeObject(jsonContent) },
                             { "httpRequestMessage",  JsonConvert.SerializeObject(httpRequestMessage) },
                         });
+
+                    await HttpClient.GetAsync(toUrl.ToString().Replace(toUrl.PathAndQuery, "/api/ping?bot=WaterfallHostBotDotNet"));
 
                     using (var response = await HttpClient.SendAsync(httpRequestMessage, cancellationToken).ConfigureAwait(false))
                     {

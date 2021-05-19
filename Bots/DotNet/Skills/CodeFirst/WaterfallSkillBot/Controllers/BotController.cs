@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Extensions.Logging;
-using a = Microsoft.Extensions.Logging;
 
 namespace Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot.Controllers
 {
@@ -44,6 +43,14 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallSkillBot.Controllers
                 _logger.LogError(ex, "Error processing request");
                 throw;
             }
+        }
+
+        [Route("api/ping")]
+        [HttpGet]
+        public async Task GetPingAsync(string bot)
+        {
+            _logger.LogInformation("Ping in WaterfallSkillBotDotNet from " + bot);
+            await Task.FromResult(Task.CompletedTask);
         }
     }
 }

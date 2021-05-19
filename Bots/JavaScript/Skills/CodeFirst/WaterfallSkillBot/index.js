@@ -257,6 +257,13 @@ try {
     }
   });
 
+  server.get('/api/ping', (req, res) => {
+    const bot = req.query.bot;
+    telemetryClient.trackEvent({name:`Ping in WaterfallSkillBotJS from ${ bot }`})
+    res.writeHead(200);
+    res.end();
+  });
+
   // Listen for incoming requests.
   server.get('/api/music', restify.plugins.serveStatic({ directory: 'dialogs/cards/files', file: 'music.mp3' }));
 

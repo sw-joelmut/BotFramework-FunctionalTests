@@ -181,6 +181,9 @@ class SkillHttpClientListener(BotFrameworkHttpClient):
             )
 
         json_content = json.dumps(activity.serialize())
+
+        await self._session.get(to_url.replace('/api/messages', '/api/ping?bot=WaterfallHostBotPython'))
+
         resp = await self._session.post(
             to_url, data=json_content.encode("utf-8"), headers=headers_dict,
         )
