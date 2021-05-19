@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 
 const dotenv = require('dotenv');
+const http = require('http');
+const https = require('https');
 const path = require('path');
 const restify = require('restify');
 
@@ -46,12 +48,30 @@ try {
 
   const authConfig = new AuthenticationConfiguration([], allowedCallersClaimsValidator);
 
+  const maxTotalSockets = (preallocatedSnatPorts, procCount = 1, weight = 0.5, overcommit = 1.1) =>
+    Math.min(
+      Math.floor((preallocatedSnatPorts / procCount) * weight * overcommit),
+      preallocatedSnatPorts
+    );
+
   // Create adapter.
   // See https://aka.ms/about-bot-adapter to learn more about how bots work.
   const adapter = new BotFrameworkAdapter({
     appId: process.env.MicrosoftAppId,
     appPassword: process.env.MicrosoftAppPassword,
-    authConfig
+    authConfig: authConfig,
+    clientOptions: {
+      agentSettings: {
+        http: new http.Agent({
+          keepAlive: true,
+          maxTotalSockets: maxTotalSockets(1024, 4, 0.3)
+        }),
+        https: new https.Agent({
+          keepAlive: true,
+          maxTotalSockets: maxTotalSockets(1024, 4, 0.7)
+        })
+      }
+    }
   });
 
   class TelemetryListenerMiddleware extends TelemetryLoggerMiddleware {

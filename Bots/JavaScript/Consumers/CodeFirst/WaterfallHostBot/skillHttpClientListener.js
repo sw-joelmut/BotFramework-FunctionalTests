@@ -85,7 +85,10 @@ class SkillHttpClientListener extends SkillHttpClient {
         },
       });
 
-      const response = await axios.post(toUrl, activity, config);
+      const activityReplaced = JSON.stringify(activity).replace('\u200b','')
+      const activityResult = JSON.parse(activityReplaced)
+
+      const response = await axios.post(toUrl, activityResult, config);
       
       this.logger.trackEvent({
         name: 'JavaScript-postActivity',
@@ -93,6 +96,9 @@ class SkillHttpClientListener extends SkillHttpClient {
           toUrl,
           token,
           activity,
+          activityStrigify: JSON.stringify(activity),
+          activityReplaced,
+          activityResult,
           status: response.status,
           data: response.data,
           config,
