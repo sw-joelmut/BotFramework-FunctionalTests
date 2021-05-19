@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -16,6 +17,7 @@ using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Activity = Microsoft.Bot.Schema.Activity;
 
 namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot.Dialogs
 {
@@ -247,6 +249,31 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot.Dialogs
                     }
 
                     httpRequestMessage.Content = jsonContent;
+
+                    // Start the child process.
+                    Process p = new Process();
+
+                    // Redirect the output stream of the child process.
+                    p.StartInfo.UseShellExecute = false;
+                    p.StartInfo.RedirectStandardOutput = true;
+                    p.StartInfo.FileName = "cmd.exe";
+                    p.StartInfo.Arguments = "/C netstat -a -n -o";
+                    p.Start();
+
+                    // Read the output stream first and then wait.
+                    string output = p.StandardOutput.ReadToEnd();
+                    p.WaitForExit();
+                    Console.WriteLine(output);
+
+                    _logger.TrackEvent("HttpClient.SendAsync-SecurePostActivityAsync", new Dictionary<string, string>
+                        {
+                            { "ports", output },
+                            { "token", token },
+                            { "activity", JsonConvert.SerializeObject(activity) },
+                            { "jsonContent", JsonConvert.SerializeObject(jsonContent) },
+                            { "httpRequestMessage",  JsonConvert.SerializeObject(httpRequestMessage) },
+                        });
+
                     using (var response = await HttpClient.SendAsync(httpRequestMessage, cancellationToken).ConfigureAwait(false))
                     {
                         var responseContentAsync = string.Empty;
