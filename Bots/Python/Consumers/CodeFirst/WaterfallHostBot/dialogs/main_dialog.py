@@ -28,13 +28,10 @@ from botbuilder.schema import Activity, ActivityTypes, InputHints, DeliveryModes
 # from botbuilder.integration.aiohttp.skills import SkillHttpClient
 
 from skills_configuration import SkillsConfiguration, DefaultConfig
-
 from dialogs.tangent_dialog import TangentDialog
 from dialogs.sso.sso_dialog import SsoDialog
-
-from Consumers.CodeFirst.WaterfallHostBot.app import AppInsightsClient
-from Consumers.CodeFirst.WaterfallHostBot.dialogs.skill_http_client_listener import SkillHttpClientListener
-from Consumers.CodeFirst.WaterfallHostBot.dialogs.skill_dialog_listener import SkillDialogListener
+from dialogs.skill_http_client_listener import SkillHttpClientListener
+from dialogs.telemetry_listener_middleware import AppInsightsClient
 
 SSO_DIALOG_PREFIX = "Sso"
 ACTIVE_SKILL_PROPERTY_NAME = "MainDialog.ActiveSkillProperty"
@@ -47,7 +44,6 @@ SKILL_GROUP_PROMPT = "SkillGroupPrompt"
 SKILL_PROMPT = "SkillPrompt"
 SKILL_ACTION_PROMPT = "SkillActionPrompt"
 
-
 class MainDialog(ComponentDialog):
     def __init__(
         self,
@@ -55,8 +51,7 @@ class MainDialog(ComponentDialog):
         conversation_id_factory: ConversationIdFactoryBase,
         skill_client: SkillHttpClientListener,
         skills_config: SkillsConfiguration,
-        configuration: DefaultConfig,
-        telemetry_client: AppInsightsClient
+        configuration: DefaultConfig
     ):
         super().__init__(MainDialog.__name__)
 
@@ -133,8 +128,6 @@ class MainDialog(ComponentDialog):
                 ],
             )
         )
-
-        self._telemetry_client = telemetry_client
 
         self.initial_dialog_id = WaterfallDialog.__name__
 
@@ -420,7 +413,7 @@ class MainDialog(ComponentDialog):
             )
 
             # Add a SkillDialog for the selected skill.
-            self.add_dialog(SkillDialogListener(skill_dialog_options, skill_info.id, self._telemetry_client))
+            self.add_dialog(SkillDialog(skill_dialog_options, skill_info.id))
 
     def _create_begin_activity(
         self, context: TurnContext, skill_id: str, selected_option: str
