@@ -114,7 +114,7 @@ class SkillHttpClientListener(BotFrameworkHttpClient):
             {'custom_dimensions': {
                 'to_url': to_url, 
                 'token': token,
-                'activity': json.dumps(activity.as_dict())
+                'activity': json.dumps(activity.as_dict(False))
                 }
             }
         )
@@ -153,7 +153,7 @@ class SkillHttpClientListener(BotFrameworkHttpClient):
                 {'custom_dimensions': {
                     'to_url': to_url, 
                     'token': token,
-                    'activity': json.dumps(activity.as_dict()),
+                    'activity': json.dumps(activity.as_dict(False)),
                     'json_content': json.dumps(activity.serialize())
                     }
                 }
@@ -191,7 +191,7 @@ class SkillHttpClientListener(BotFrameworkHttpClient):
             {'custom_dimensions': {
                 'to_url': to_url, 
                 'token': token,
-                'activity': json.dumps(activity.as_dict()),
+                'activity': json.dumps(activity.as_dict(False)),
                 'json_content': json.dumps(activity.serialize()),
                 'response_data': (await resp.read()).decode()
                 }

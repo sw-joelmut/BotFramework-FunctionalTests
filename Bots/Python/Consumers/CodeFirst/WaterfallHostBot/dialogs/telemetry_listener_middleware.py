@@ -19,7 +19,7 @@ class TelemetryListenerMiddleware(TelemetryLoggerMiddleware):
         self._log_personal_information = log_personal_information
 
     async def on_receive_activity(self, activity: Activity) -> None:
-        self.telemetry_client.track_event(
+        self._telemetry_client.track_event(
             name=TelemetryLoggerConstants.BOT_MSG_RECEIVE_EVENT,
             properties={
                 'custom_dimensions':{
@@ -34,7 +34,7 @@ class TelemetryListenerMiddleware(TelemetryLoggerMiddleware):
         )
 
     async def on_send_activity(self, activity: Activity) -> None:
-        self.telemetry_client.track_event(
+        self._telemetry_client.track_event(
             name=TelemetryLoggerConstants.BOT_MSG_SEND_EVENT,
             properties={
                 'custom_dimensions':{
