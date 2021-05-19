@@ -266,6 +266,17 @@ APP.router.add_get("/api/music", music)
 # Listen for incoming notifications and send proactive messages to users.
 APP.router.add_get("/api/notify", notify)
 
+# Listen for incoming requests on /api/notify
+async def ping(req: Request) -> Response:
+    bot = req.query.get("bot")
+    TELEMETRY_CLIENT.track_event(f"Ping in WaterfallSkillBotPython from {bot}")
+    return Response(
+        content_type="text/html",
+        status=HTTPStatus.OK,
+    )
+
+APP.router.add_get("/api/ping", ping)
+
 if __name__ == "__main__":
     try:
         web.run_app(APP, host="localhost", port=CONFIG.PORT)
