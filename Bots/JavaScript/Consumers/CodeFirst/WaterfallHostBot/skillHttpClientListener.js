@@ -89,22 +89,22 @@ class SkillHttpClientListener extends SkillHttpClient {
       const activityReplaced = JSON.stringify(activity).replace('\u200b', '')
       const activityResult = JSON.parse(activityReplaced)
 
-      exec("netstat -a -n -o", (error, stdout, stderr) => {
-        this.logger.trackEvent({
-          name: 'JavaScript-postActivity-ports',
-          properties: {
-            toUrl,
-            token,
-            activity,
-            activityStrigify: JSON.stringify(activity),
-            activityReplaced,
-            activityResult,
-            error,
-            stderr,
-            stdout
-          },
-        });
-      });
+      // exec("netstat -a -n -o", (error, stdout, stderr) => {
+      //   this.logger.trackEvent({
+      //     name: 'JavaScript-postActivity-ports',
+      //     properties: {
+      //       toUrl,
+      //       token,
+      //       activity,
+      //       activityStrigify: JSON.stringify(activity),
+      //       activityReplaced,
+      //       activityResult,
+      //       error,
+      //       stderr,
+      //       stdout
+      //     },
+      //   });
+      // });
 
       await axios.get(toUrl.replace('/api/messages', '/api/ping?bot=WaterfallHostBotJS'))
 

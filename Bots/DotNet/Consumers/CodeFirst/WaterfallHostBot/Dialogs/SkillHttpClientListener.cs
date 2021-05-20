@@ -250,28 +250,28 @@ namespace Microsoft.BotFrameworkFunctionalTests.WaterfallHostBot.Dialogs
 
                     httpRequestMessage.Content = jsonContent;
 
-                    // Start the child process.
-                    Process p = new Process();
+                    // // Start the child process.
+                    // Process p = new Process();
 
-                    // Redirect the output stream of the child process.
-                    p.StartInfo.UseShellExecute = false;
-                    p.StartInfo.RedirectStandardOutput = true;
-                    p.StartInfo.FileName = "powershell.exe";
-                    p.StartInfo.Arguments = "netstat -a -n -o";
-                    p.Start();
+                    // // Redirect the output stream of the child process.
+                    // p.StartInfo.UseShellExecute = false;
+                    // p.StartInfo.RedirectStandardOutput = true;
+                    // p.StartInfo.FileName = "powershell.exe";
+                    // p.StartInfo.Arguments = "netstat -a -n -o";
+                    // p.Start();
 
-                    // Read the output stream first and then wait.
-                    string output = p.StandardOutput.ReadToEnd();
-                    p.WaitForExit();
+                    // // Read the output stream first and then wait.
+                    // string output = p.StandardOutput.ReadToEnd();
+                    // p.WaitForExit();
 
-                    _logger.TrackEvent("Ports-SecurePostActivityAsync", new Dictionary<string, string>
-                        {
-                            { "ports", output },
-                            { "token", token },
-                            { "activity", JsonConvert.SerializeObject(activity) },
-                            { "jsonContent", JsonConvert.SerializeObject(jsonContent) },
-                            { "httpRequestMessage",  JsonConvert.SerializeObject(httpRequestMessage) },
-                        });
+                    // _logger.TrackEvent("Ports-SecurePostActivityAsync", new Dictionary<string, string>
+                    //     {
+                    //         { "ports", output },
+                    //         { "token", token },
+                    //         { "activity", JsonConvert.SerializeObject(activity) },
+                    //         { "jsonContent", JsonConvert.SerializeObject(jsonContent) },
+                    //         { "httpRequestMessage",  JsonConvert.SerializeObject(httpRequestMessage) },
+                    //     });
 
                     await HttpClient.GetAsync(toUrl.ToString().Replace(toUrl.PathAndQuery, "/api/ping?bot=WaterfallHostBotDotNet"));
 
