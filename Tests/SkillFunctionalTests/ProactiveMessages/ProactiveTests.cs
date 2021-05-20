@@ -20,7 +20,6 @@ namespace SkillFunctionalTests.ProactiveMessages
     [Trait("TestCategory", "ProactiveMessages")]
     public class ProactiveTests : ScriptTestBase
     {
-        private static HttpClient _httpClient = new HttpClient();
         private readonly string _testScriptsFolder = Directory.GetCurrentDirectory() + @"/ProactiveMessages/TestScripts";
 
         public ProactiveTests(ITestOutputHelper output)
@@ -104,7 +103,7 @@ namespace SkillFunctionalTests.ProactiveMessages
             });
 
             // Send a get request to the message's url to continue the conversation.
-            await _httpClient.GetAsync(url).ConfigureAwait(false);
+            await HttpClient.GetAsync(url).ConfigureAwait(false);
 
             var testParamsEnd = new Dictionary<string, string>
             {
