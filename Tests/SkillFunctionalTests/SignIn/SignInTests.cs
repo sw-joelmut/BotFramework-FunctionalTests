@@ -1,9 +1,13 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Bot.Connector;
 using Microsoft.Bot.Schema;
@@ -18,13 +22,15 @@ using Xunit.Abstractions;
 namespace SkillFunctionalTests.SignIn
 {
     [Trait("TestCategory", "SignIn")]
-    public class SignInTests : ScriptTestBase
+    public class SignInTests : ScriptTestBase, IClassFixture<TestFixture>
     {
         private readonly string _testScriptsFolder = Directory.GetCurrentDirectory() + @"/SignIn/TestScripts";
+        private readonly TestFixture _testFixture;
 
-        public SignInTests(ITestOutputHelper output)
+        public SignInTests(ITestOutputHelper output, TestFixture testFixture)
             : base(output)
         {
+            _testFixture = testFixture;
         }
 
         public static IEnumerable<object[]> TestCases()
@@ -107,5 +113,33 @@ namespace SkillFunctionalTests.SignIn
             // Execute the rest of the conversation passing the messageId.
             await runner.RunTestAsync(Path.Combine(_testScriptsFolder, "SignIn2.json"), testParams);
         }
+    }
+}
+
+[SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1402:File may only contain a single type", Justification = "HttpClientListener instatiation is only used for this class script.")]
+public class TestFixture : IDisposable
+{
+    public TestFixture()
+    {
+        var cookieContainer = new CookieContainer();
+        using var handler = new HttpClientHandler
+        {
+            AllowAutoRedirect = false,
+            CookieContainer = cookieContainer
+        };
+
+        // We have a sign in url, which will produce multiple HTTP 302 for redirects
+        // This will path 
+        //      token service -> other services -> auth provider -> token service (post sign in)-> response with token
+        // When we receive the post sign in redirect, we add the cookie passed in the session info
+        // to test enhanced authentication. This in the scenarios happens by itself since browsers do this for us.
+        HttpClientListener = new HttpClientListener(handler);
+    }
+
+    public HttpClientListener HttpClientListener { get; }
+
+    public void Dispose()
+    {
+        // throw new NotImplementedException();
     }
 }

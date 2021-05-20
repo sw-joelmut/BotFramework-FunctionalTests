@@ -21,13 +21,14 @@ namespace TranscriptTestRunner
         /// </summary>
         /// <param name="channel">The type of channel to create based on the <see cref="Channels"/> class.</param>
         /// <param name="options">The options to create the client.</param>
+        /// <param name="httpClientListener">The httpClientListener <see cref="ILogger"/> instance.</param>
         /// <param name="logger">An optional <see cref="ILogger"/> instance.</param>
-        public TestClientFactory(string channel, DirectLineTestClientOptions options, ILogger logger)
+        public TestClientFactory(string channel, DirectLineTestClientOptions options, ILogger logger, HttpClientListener httpClientListener = null)
         {
             switch (channel)
             {
                 case Channels.Directline:
-                    _testClientBase = new DirectLineTestClient(options, logger);
+                    _testClientBase = new DirectLineTestClient(options, httpClientListener, logger);
                     break;
                 case Channels.Emulator:
                     break;

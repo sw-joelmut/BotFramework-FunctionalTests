@@ -57,13 +57,15 @@ namespace TranscriptTestRunner.TestClients
         private ClientWebSocket _webSocketClient;
         private readonly ILogger _logger;
         private readonly DirectLineTestClientOptions _options;
+        private readonly TestClientAuthentication _clientAuthentication;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DirectLineTestClient"/> class.
         /// </summary>
         /// <param name="options">Options for the client configuration.</param>
         /// <param name="logger">The logger.</param>
-        public DirectLineTestClient(DirectLineTestClientOptions options, ILogger logger = null)
+        /// <param name="httpClientListener">The httpClientListener.</param>
+        public DirectLineTestClient(DirectLineTestClientOptions options, HttpClientListener httpClientListener = null, ILogger logger = null)
         {
             if (string.IsNullOrWhiteSpace(options.BotId))
             {
@@ -78,6 +80,8 @@ namespace TranscriptTestRunner.TestClients
             _options = options;
 
             _logger = logger ?? NullLogger.Instance;
+
+            _clientAuthentication = new TestClientAuthentication(httpClientListener);
         }
 
         /// <inheritdoc/>
@@ -157,8 +161,8 @@ namespace TranscriptTestRunner.TestClients
         public override async Task<bool> SignInAsync(string url)
         {
             const string sessionUrl = "https://directline.botframework.com/v3/directline/session/getsessionid";
-            var directLineSession = await TestClientAuthentication.GetSessionInfoAsync(sessionUrl, _conversation.Token, _originHeader).ConfigureAwait(false);
-            return await TestClientAuthentication.SignInAsync(url, _originHeader, directLineSession).ConfigureAwait(false);
+            var directLineSession = await _clientAuthentication.GetSessionInfoAsync(sessionUrl, _conversation.Token, _originHeader).ConfigureAwait(false);
+            return await _clientAuthentication.SignInAsync(url, _originHeader, directLineSession).ConfigureAwait(false);
         }
 
         /// <summary>

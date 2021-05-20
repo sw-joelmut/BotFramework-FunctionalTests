@@ -15,8 +15,44 @@ namespace TranscriptTestRunner.Authentication
     /// <summary>
     /// Authentication class for the Test Client.
     /// </summary>
-    public static class TestClientAuthentication
+    public class TestClientAuthentication
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TestClientAuthentication"/> class.
+        /// </summary>
+        /// <param name="httpClientListener">.</param>
+        public TestClientAuthentication(HttpClientListener httpClientListener = null)
+        {
+            if (httpClientListener != null)
+            {
+                HttpClientListener = httpClientListener;
+            }
+            else
+            {
+                var cookieContainer = new CookieContainer();
+                using var handler = new HttpClientHandler
+                {
+                    AllowAutoRedirect = false,
+                    CookieContainer = cookieContainer
+                };
+
+                // We have a sign in url, which will produce multiple HTTP 302 for redirects
+                // This will path 
+                //      token service -> other services -> auth provider -> token service (post sign in)-> response with token
+                // When we receive the post sign in redirect, we add the cookie passed in the session info
+                // to test enhanced authentication. This in the scenarios happens by itself since browsers do this for us.
+                HttpClientListener = new HttpClientListener(handler);
+            }
+        }
+
+        /// <summary>
+        /// Gets.
+        /// </summary>
+        /// <value>
+        /// .
+        /// </value>
+        public HttpClientListener HttpClientListener { get; }
+
         /// <summary>
         /// Signs in to the bot.
         /// </summary>
@@ -24,26 +60,13 @@ namespace TranscriptTestRunner.Authentication
         /// <param name="originHeader">The Origin Header with key and value.</param>
         /// <param name="sessionInfo">The Session information definition.</param>
         /// <returns>True, if SignIn is successful; otherwise false.</returns>
-        public static async Task<bool> SignInAsync(string url, KeyValuePair<string, string> originHeader, SessionInfo sessionInfo)
+        public async Task<bool> SignInAsync(string url, KeyValuePair<string, string> originHeader, SessionInfo sessionInfo)
         {
-            var cookieContainer = new CookieContainer();
-            using var handler = new HttpClientHandler
-            {
-                AllowAutoRedirect = false,
-                CookieContainer = cookieContainer
-            };
-
-            // We have a sign in url, which will produce multiple HTTP 302 for redirects
-            // This will path 
-            //      token service -> other services -> auth provider -> token service (post sign in)-> response with token
-            // When we receive the post sign in redirect, we add the cookie passed in the session info
-            // to test enhanced authentication. This in the scenarios happens by itself since browsers do this for us.
-            using var client = new HttpClient(handler);
-            client.DefaultRequestHeaders.Add(originHeader.Key, originHeader.Value);
+            HttpClientListener.DefaultRequestHeaders.Add(originHeader.Key, originHeader.Value);
 
             while (!string.IsNullOrEmpty(url))
             {
-                using var response = await client.GetAsync(new Uri(url)).ConfigureAwait(false);
+                using var response = await HttpClientListener.GetAsync(new Uri(url)).ConfigureAwait(false);
                 var text = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
                 url = response.StatusCode == HttpStatusCode.Redirect
@@ -68,7 +91,7 @@ namespace TranscriptTestRunner.Authentication
                 if (url.StartsWith("https://token.botframework.com/api/oauth/PostSignInCallback", StringComparison.Ordinal))
                 {
                     url += $"&code_challenge={sessionInfo.SessionId}";
-                    cookieContainer.Add(sessionInfo.Cookie);
+                    HttpClientListener.Handler.CookieContainer.GetCookies(new Uri(url)).Add(sessionInfo.Cookie);
                 }
             }
 
@@ -82,7 +105,7 @@ namespace TranscriptTestRunner.Authentication
         /// <param name="token">The token to use for authorization.</param>
         /// <param name="originHeader">The Origin Header with key and value.</param>
         /// <returns>The <see cref="SessionInfo"/> Task.</returns>
-        public static async Task<SessionInfo> GetSessionInfoAsync(string url, string token, KeyValuePair<string, string> originHeader)
+        public async Task<SessionInfo> GetSessionInfoAsync(string url, string token, KeyValuePair<string, string> originHeader)
         {
             // Set up cookie container to obtain response cookie
             var cookies = new CookieContainer();
