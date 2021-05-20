@@ -81,6 +81,19 @@ namespace TranscriptTestRunner.TestClients
         }
 
         /// <inheritdoc/>
+        public override void CloseConversation()
+        {
+            _conversation = null;
+            _lastActivityIndex = -1;
+            _dlClient?.Dispose();
+            _webSocketClient?.Dispose();
+            _dlClient = null;
+            _webSocketClient = null;
+            _activityQueue.Clear();
+            _futureQueue.Clear();
+        }
+
+        /// <inheritdoc/>
         public override async Task SendActivityAsync(BotActivity activity, CancellationToken cancellationToken)
         {
             if (_conversation == null)

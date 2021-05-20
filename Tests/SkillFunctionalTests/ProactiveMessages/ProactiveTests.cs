@@ -79,10 +79,15 @@ namespace SkillFunctionalTests.ProactiveMessages
 
             var testCase = testData.GetObject<TestCase>();
             Logger.LogInformation(JsonConvert.SerializeObject(testCase, Formatting.Indented));
+            if (!Hosts.ContainsKey(testCase.HostBot))
+            {
+                var options = TestClientOptions[testCase.HostBot];
+                Hosts.Add(testCase.HostBot, new TestClientFactory(testCase.ChannelId, options, Logger));
+            }
 
-            var options = TestClientOptions[testCase.HostBot];
-            var runner = new XUnitTestRunner(new TestClientFactory(testCase.ChannelId, options, Logger).GetTestClient(), TestRequestTimeout, Logger);
-            
+            var client = Hosts[testCase.HostBot].GetTestClient();
+            var runner = new XUnitTestRunner(client, TestRequestTimeout, Logger);
+
             var testParamsStart = new Dictionary<string, string>
             {
                 { "DeliveryMode", testCase.DeliveryMode },
@@ -113,6 +118,8 @@ namespace SkillFunctionalTests.ProactiveMessages
 
             // Execute the rest of the conversation passing the messageId.
             await runner.RunTestAsync(Path.Combine(_testScriptsFolder, "ProactiveEnd.json"), testParamsEnd);
+
+            client.CloseConversation();
         }
     }
 }

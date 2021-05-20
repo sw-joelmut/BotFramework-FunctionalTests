@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -48,5 +49,10 @@ namespace TranscriptTestRunner
         /// or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the work queued to execute.</returns>
         public abstract Task UploadAsync(Stream file, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Closes conversation.
+        /// </summary>
+        public abstract void CloseConversation();
     }
 }

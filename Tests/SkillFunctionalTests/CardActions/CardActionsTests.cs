@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -103,9 +104,14 @@ namespace SkillFunctionalTests.CardActions
         {
             var testCase = testData.GetObject<TestCase>();
             Logger.LogInformation(JsonConvert.SerializeObject(testCase, Formatting.Indented));
+            if (!Hosts.ContainsKey(testCase.HostBot))
+            {
+                var options = TestClientOptions[testCase.HostBot];
+                Hosts.Add(testCase.HostBot, new TestClientFactory(testCase.ChannelId, options, Logger));
+            }
 
-            var options = TestClientOptions[testCase.HostBot];
-            var runner = new XUnitTestRunner(new TestClientFactory(testCase.ChannelId, options, Logger).GetTestClient(), TestRequestTimeout, Logger);
+            var client = Hosts[testCase.HostBot].GetTestClient();
+            var runner = new XUnitTestRunner(client, TestRequestTimeout, Logger);
 
             var testParams = new Dictionary<string, string>
             {
@@ -115,6 +121,8 @@ namespace SkillFunctionalTests.CardActions
 
             await runner.RunTestAsync(Path.Combine(_testScriptsFolder, "WaterfallGreeting.json"), testParams);
             await runner.RunTestAsync(Path.Combine(_testScriptsFolder, testCase.Script), testParams);
+
+            client.CloseConversation();
         }
     }
 }
