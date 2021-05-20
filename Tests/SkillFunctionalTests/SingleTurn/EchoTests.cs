@@ -88,14 +88,10 @@ namespace SkillFunctionalTests.SingleTurn
         {
             var testCase = testData.GetObject<TestCase>();
             Logger.LogInformation(JsonConvert.SerializeObject(testCase, Formatting.Indented));
-            if (!Hosts.ContainsKey(testCase.HostBot))
-            {
-                var options = TestClientOptions[testCase.HostBot];
-                Hosts.Add(testCase.HostBot, new TestClientFactory(testCase.ChannelId, options, Logger));
-            }
 
-            var client = Hosts[testCase.HostBot].GetTestClient();
-            var runner = new XUnitTestRunner(client, TestRequestTimeout, Logger);
+            var options = TestClientOptions[testCase.HostBot];
+
+            var runner = new XUnitTestRunner(new TestClientFactory(testCase.ChannelId, options, Logger).GetTestClient(), TestRequestTimeout, Logger);
 
             var testParams = new Dictionary<string, string>
             {
@@ -104,8 +100,6 @@ namespace SkillFunctionalTests.SingleTurn
             };
 
             await runner.RunTestAsync(Path.Combine(_testScriptsFolder, testCase.Script), testParams);
-
-            client.CloseConversation();
         }
     }
 }
