@@ -7,6 +7,7 @@ using System.Net.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SkillFunctionalTests.Common;
+using TranscriptTestRunner;
 using TranscriptTestRunner.TestClients;
 using Xunit.Abstractions;
 

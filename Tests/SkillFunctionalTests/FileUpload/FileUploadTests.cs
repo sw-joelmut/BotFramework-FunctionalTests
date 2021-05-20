@@ -27,6 +27,8 @@ namespace SkillFunctionalTests.FileUpload
         {
         }
 
+        private static Dictionary<HostBot, TestClientFactory> Hosts { get; } = new Dictionary<HostBot, TestClientFactory>();
+
         public static IEnumerable<object[]> TestCases()
         {
             var channelIds = new List<string> { Channels.Directline };
@@ -76,11 +78,17 @@ namespace SkillFunctionalTests.FileUpload
         {
             const string fileName = "TestFile.txt";
             var testGuid = Guid.NewGuid().ToString();
+
             var testCase = testData.GetObject<TestCase>();
             Logger.LogInformation(JsonConvert.SerializeObject(testCase, Formatting.Indented));
+            if (!Hosts.ContainsKey(testCase.HostBot))
+            {
+                var options = TestClientOptions[testCase.HostBot];
+                Hosts.Add(testCase.HostBot, new TestClientFactory(testCase.ChannelId, options, Logger));
+            }
 
-            var options = TestClientOptions[testCase.HostBot];
-            var runner = new XUnitTestRunner(new TestClientFactory(testCase.ChannelId, options, Logger).GetTestClient(), TestRequestTimeout, Logger);
+            var client = Hosts[testCase.HostBot].GetTestClient();
+            var runner = new XUnitTestRunner(client, TestRequestTimeout, Logger);
 
             // Execute the first part of the conversation.
             var testParams = new Dictionary<string, string>
@@ -105,6 +113,8 @@ namespace SkillFunctionalTests.FileUpload
 
             // Execute the rest of the conversation.
             await runner.RunTestAsync(Path.Combine(_testScriptsFolder, "FileUpload2.json"), testParams);
+
+            client.CloseConversation();
         }
     }
 }
