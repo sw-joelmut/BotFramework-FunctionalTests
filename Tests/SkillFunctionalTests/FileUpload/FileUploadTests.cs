@@ -88,6 +88,9 @@ namespace SkillFunctionalTests.FileUpload
             }
 
             var client = Hosts[testCase.HostBot].GetTestClient();
+
+            await client.StartConversationAsync().ConfigureAwait(false);
+
             var runner = new XUnitTestRunner(client, TestRequestTimeout, Logger);
 
             // Execute the first part of the conversation.

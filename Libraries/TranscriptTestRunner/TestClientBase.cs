@@ -54,5 +54,11 @@ namespace TranscriptTestRunner
         /// Closes conversation.
         /// </summary>
         public abstract void CloseConversation();
+
+        /// <summary>
+        /// StartConversationAsync.
+        /// </summary>
+        /// <returns>A task that represents the work queued to execute.</returns>
+        public abstract Task StartConversationAsync();
     }
 }

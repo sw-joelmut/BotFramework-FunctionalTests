@@ -88,6 +88,7 @@ namespace SkillFunctionalTests.ProactiveMessages
             }
 
             var client = Hosts[testCase.HostBot].GetTestClient();
+            await client.StartConversationAsync().ConfigureAwait(false);
             var runner = new XUnitTestRunner(client, TestRequestTimeout, Logger);
 
             var testParamsStart = new Dictionary<string, string>

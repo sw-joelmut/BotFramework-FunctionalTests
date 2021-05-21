@@ -86,6 +86,7 @@ namespace SkillFunctionalTests.SignIn
             }
 
             var client = Hosts[testCase.HostBot].GetTestClient();
+            await client.StartConversationAsync().ConfigureAwait(false);
             var runner = new XUnitTestRunner(client, TestRequestTimeout, Logger);
 
             var testParams = new Dictionary<string, string>

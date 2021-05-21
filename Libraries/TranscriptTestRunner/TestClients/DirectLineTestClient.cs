@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Rest.TransientFaultHandling;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using TranscriptTestRunner.Authentication;
 using Activity = Microsoft.Bot.Connector.DirectLine.Activity;
 using ActivityTypes = Microsoft.Bot.Schema.ActivityTypes;
@@ -33,6 +34,12 @@ namespace TranscriptTestRunner.TestClients
     /// </summary>
     public class DirectLineTestClient : TestClientBase, IDisposable
     {
+#pragma warning disable SA1303 // Const field names should begin with upper-case letter
+        private const string host = "https://directline.botframework.com/v3/directline";
+#pragma warning restore SA1303 // Const field names should begin with upper-case letter
+
+        private static string conversationsAPI = $"{host}/conversations";
+
         // DL client sample: https://github.com/microsoft/BotFramework-DirectLine-DotNet/tree/main/samples/core-DirectLine/DirectLineClient
         // Stores the activities received from the bot
         private readonly SortedDictionary<int, BotActivity> _activityQueue = new SortedDictionary<int, BotActivity>();
@@ -44,7 +51,7 @@ namespace TranscriptTestRunner.TestClients
         private readonly object _listLock = new object();
 
         // Tracks the index of the last activity received
-        private int _lastActivityIndex = -1;
+        private int _lastActivityIndex = 0;
 
         private readonly KeyValuePair<string, string> _originHeader = new KeyValuePair<string, string>("Origin", $"https://botframework.test.com/{Guid.NewGuid()}");
         private readonly string _user = $"TestUser-{Guid.NewGuid()}";
@@ -55,10 +62,15 @@ namespace TranscriptTestRunner.TestClients
         // To detect redundant calls to dispose
         private bool _disposed;
         private DirectLineClient _dlClient;
+        private string _watermark;
+        private List<Activity> _activities = new List<Activity>();
 
         //private ClientWebSocket _webSocketClient;
         private readonly ILogger _logger;
         private readonly DirectLineTestClientOptions _options;
+#pragma warning disable CA2213 // Disposable fields should be disposed
+        private readonly HttpClient _httpClient;
+#pragma warning restore CA2213 // Disposable fields should be disposed
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DirectLineTestClient"/> class.
@@ -80,19 +92,122 @@ namespace TranscriptTestRunner.TestClients
             _options = options;
 
             _logger = logger ?? NullLogger.Instance;
+
+            // Obtain a token using the Direct Line secret
+            var tokenInfo = GetDirectLineTokenAsync().Result;
+
+            //// Ensure we dispose the client after the retries (this helps us make sure we get a new conversation ID on each try)
+            //_dlClient?.Dispose();
+
+            // Create directLine client from token and initialize settings.
+            _dlClient = new DirectLineClient(tokenInfo.Token);
+            _dlClient.SetRetryPolicy(new RetryPolicy(new HttpStatusCodeErrorDetectionStrategy(), 0));
+
+            // From now on, we'll add an Origin header in directLine calls, with 
+            // the trusted origin we sent when acquiring the token as value.
+            _dlClient.HttpClient.DefaultRequestHeaders.Add(_originHeader.Key, _originHeader.Value);
+
+            _httpClient = new HttpClient();
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenInfo.Token);
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         /// <inheritdoc/>
         public override void CloseConversation()
         {
             _conversation = null;
-            _lastActivityIndex = -1;
-            _dlClient?.Dispose();
-            _webSocketClient?.Dispose();
-            _dlClient = null;
-            _webSocketClient = null;
+            _lastActivityIndex = 0;
+            _watermark = string.Empty;
+            _activities.Clear();
+
+            //_dlClient?.Dispose();
+            //_webSocketClient?.Dispose();
+            //_dlClient = null;
+            //_webSocketClient = null;
             _activityQueue.Clear();
             _futureQueue.Clear();
+        }
+
+        /// <inheritdoc/>
+        public override async Task StartConversationAsync()
+        {
+            // Obtain a token using the Direct Line secret
+            var tokenInfo = GetDirectLineTokenAsync().Result;
+
+            //var body = new {
+            //    eTag = "identity-tag",
+
+            //}
+            //using HttpContent content = new StringContent(JsonConvert.SerializeObject(activityPost), Encoding.UTF8, "application/json");
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenInfo.Token);
+            var response = await _httpClient.PostAsync(conversationsAPI, null).ConfigureAwait(false);
+
+            response.EnsureSuccessStatusCode();
+
+            _conversation = JsonConvert.DeserializeObject<Conversation>(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
+
+            Console.WriteLine("test");
+
+            //var tryCount = 0;
+            //var maxTries = _options.StartConversationMaxAttempts;
+            //while (tryCount < maxTries && !_activityQueue.Any() && !_futureQueue.Any())
+            //{
+            //    using var startConversationCts = new CancellationTokenSource(_options.StartConversationTimeout);
+            //    tryCount++;
+            //    try
+            //    {
+            //        _logger.LogDebug($"{DateTime.Now} Attempting to start conversation (try {tryCount} of {maxTries}).");
+
+            // Start the conversation now (this will send a ConversationUpdate to the bot)
+            //_conversation = null;
+            //_conversation = await _dlClient.Conversations.StartConversationAsync().ConfigureAwait(false);
+            //_logger.LogDebug($"{DateTime.Now} Got conversation ID {_conversation.ConversationId} from direct line client.");
+            //_logger.LogTrace($"{DateTime.Now} {Environment.NewLine}{JsonConvert.SerializeObject(_conversation, Formatting.Indented)}");
+
+            // Ensure we dispose the _webSocketClient after the retries.
+            //_webSocketClient?.Dispose();
+
+            // Initialize web socket client and listener
+            //_webSocketClient = new ClientWebSocket();
+            //await _webSocketClient.ConnectAsync(new Uri(_conversation.StreamUrl), startConversationCts.Token).ConfigureAwait(false);
+
+            //_logger.LogDebug($"{DateTime.Now} Connected to websocket, state is {_webSocketClient.State}.");
+
+            // Block and wait for the first response to come in.
+            //ActivitySet activitySet = null;
+            //while (activitySet == null)
+            //{
+            //    activitySet = await ReceiveActivityAsync(startConversationCts).ConfigureAwait(false);
+            //    if (activitySet != null)
+            //    {
+            //        ProcessActivitySet(activitySet);
+            //    }
+            //    else
+            //    {
+            //        _logger.LogDebug($"{DateTime.Now} Got empty ActivitySet while attempting to start the conversation.");
+            //    }
+            //}
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        if (tryCount < maxTries)
+            //        {
+            //            _logger.LogDebug($"{DateTime.Now} Failed to start conversation (attempt {tryCount} of {maxTries}), retrying...{Environment.NewLine}Exception{Environment.NewLine}{ex}");
+            //        }
+            //        else
+            //        {
+            //            _logger.LogCritical($"{DateTime.Now} Failed to start conversation after {maxTries} attempts.{Environment.NewLine}Exception{Environment.NewLine}{ex}");
+            //            throw;
+            //        }
+            //    }
+            //}
+
+            // We have started a conversation and got at least one activity back. 
+            // Start long running background task to read activities from the socket.
+            //_webSocketClientCts = new CancellationTokenSource();
+
+            //_ = Task.Factory.StartNew(() => ListenAsync(_webSocketClientCts), _webSocketClientCts.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
 
         /// <inheritdoc/>
@@ -100,7 +215,7 @@ namespace TranscriptTestRunner.TestClients
         {
             if (_conversation == null)
             {
-                await StartConversationAsync().ConfigureAwait(false);
+                //await StartConversationAsync().ConfigureAwait(false);
 
                 if (activity.Type == ActivityTypes.ConversationUpdate)
                 {
@@ -136,40 +251,148 @@ namespace TranscriptTestRunner.TestClients
                 Attachments = attachments,
             };
 
-            _logger.LogDebug($"{DateTime.Now} Sending activity to conversation {_conversation.ConversationId}");
-            _logger.LogDebug(JsonConvert.SerializeObject(activityPost, Formatting.Indented));
+            string url = $"{host}/conversations/{_conversation.ConversationId}/activities";
 
-            await _dlClient.Conversations.PostActivityAsync(_conversation.ConversationId, activityPost, cancellationToken).ConfigureAwait(false);
+            using HttpContent content = new StringContent(JsonConvert.SerializeObject(activityPost), Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync(url, content).ConfigureAwait(false);
+            var r = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var token = JToken.Parse(r);
+
+            //_repliesToId = token.SelectToken("id").ToString();
+
+            if (token.SelectToken("error")?.ToString()?.Trim().Length > 0)
+            {
+                throw new Exception(token.SelectToken("error").ToString());
+            }
+
+            if (response.StatusCode != System.Net.HttpStatusCode.NoContent)
+            {
+                // TODO: response.EnsureSuccessStatusCode();
+            }
+
+            //if (_conversation == null)
+            //{
+            //    //await StartConversationAsync().ConfigureAwait(false);
+
+            //    if (activity.Type == ActivityTypes.ConversationUpdate)
+            //    {
+            //        // StartConversationAsync sends a ConversationUpdate automatically.
+            //        // Ignore the activity sent if it is the first one we are sending to the bot and it is a ConversationUpdate.
+            //        // This can happen with recorded scripts where we get a conversation update from the transcript that we don't
+            //        // want to use.
+            //        return;
+            //    }
+            //}
+
+            //var attachments = new List<Attachment>();
+
+            //if (activity.Attachments != null && activity.Attachments.Any())
+            //{
+            //    foreach (var item in activity.Attachments)
+            //    {
+            //        attachments.Add(new Attachment
+            //        {
+            //            ContentType = item.ContentType,
+            //            ContentUrl = item.ContentUrl,
+            //            Content = item.Content,
+            //            Name = item.Name
+            //        });
+            //    }
+            //}
+
+            //var activityPost = new Activity
+            //{
+            //    From = new ChannelAccount(_user),
+            //    Text = activity.Text,
+            //    Type = activity.Type,
+            //    Attachments = attachments,
+            //};
+
+            //_logger.LogDebug($"{DateTime.Now} Sending activity to conversation {_conversation.ConversationId}");
+            //_logger.LogDebug(JsonConvert.SerializeObject(activityPost, Formatting.Indented));
+
+            //await _dlClient.Conversations.PostActivityAsync(_conversation.ConversationId, activityPost, cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
         public override async Task<BotActivity> GetNextReplyAsync(CancellationToken cancellationToken)
         {
-            if (_conversation == null)
+            if (_activities.Count <= 0)
             {
-                await StartConversationAsync().ConfigureAwait(false);
-            }
+                string url = $"{host}/conversations/{_conversation.ConversationId}/activities";
 
-            var activitySet = _dlClient.Conversations.GetActivities(_conversation.ConversationId);
-
-            ProcessActivitySet(activitySet);
-
-            // lock the list while work with it.
-            lock (_listLock)
-            {
-                if (_activityQueue.Any())
+                if (_watermark?.Trim().Length > 0)
                 {
-                    // Return the first activity in the queue (if any)
-                    var keyValuePair = _activityQueue.First();
-                    _activityQueue.Remove(keyValuePair.Key);
-                    _logger.LogDebug($"{DateTime.Now} Popped ID {keyValuePair.Key} from queue (Activity ID is {keyValuePair.Value.Id}. Queue length is now: {_activityQueue.Count}.");
-
-                    return keyValuePair.Value;
+                    url += $"?watermark={_watermark}";
                 }
+
+                var response = await _httpClient.GetStringAsync(url).ConfigureAwait(false);
+
+                var activitySet = JsonConvert.DeserializeObject<ActivitySet>(response);
+
+                var activities = activitySet.Activities.Where(e => e.Type != "conversationUpdate" && e.From.Id != _user).ToList();
+
+                if (activities.Count > 0)
+                {
+                    _watermark = activitySet.Watermark;
+                }
+
+                _activities = activities;
             }
 
-            // No activities in the queue
+            if (_activities.Count > 0)
+            {
+                var botActivity = JsonConvert.DeserializeObject<BotActivity>(JsonConvert.SerializeObject(_activities[0]));
+
+                if (botActivity.From.Id.StartsWith(_options.BotId, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    botActivity.From.Role = RoleTypes.Bot;
+                    botActivity.Recipient = new BotChannelAccount(role: RoleTypes.User);
+                }
+
+                _activities.RemoveAt(0);
+                return botActivity;
+            }
+
             return null;
+
+            //if (botActivity.From.Id.StartsWith(_options.BotId, StringComparison.CurrentCultureIgnoreCase))
+            //{
+            //    botActivity.From.Role = RoleTypes.Bot;
+            //    botActivity.Recipient = new BotChannelAccount(role: RoleTypes.User);
+
+            //    _activityQueue.Add(activitySeq, botActivity);
+            //    _logger.LogDebug($"{DateTime.Now} Added activity to queue (key is {activitySeq} activity ID is {botActivity.Id}. Activity queue length: {_activityQueue.Count} - Future activities queue length: {_futureQueue.Count}");
+            //}
+
+            //return result;
+
+            //if (_conversation == null)
+            //{
+            //    await StartConversationAsync().ConfigureAwait(false);
+            //}
+
+            //var activitySet = await _dlClient.Conversations.GetActivitiesAsync(_conversation.ConversationId).ConfigureAwait(false);
+
+            //ProcessActivitySet(activitySet);
+
+            //// lock the list while work with it.
+            //lock (_listLock)
+            //{
+            //    if (_activityQueue.Any())
+            //    {
+            //        // Return the first activity in the queue (if any)
+            //        var keyValuePair = _activityQueue.First();
+            //        _activityQueue.Remove(keyValuePair.Key);
+            //        _logger.LogDebug($"{DateTime.Now} Popped ID {keyValuePair.Key} from queue (Activity ID is {keyValuePair.Value.Id}. Queue length is now: {_activityQueue.Count}.");
+
+            //        return keyValuePair.Value;
+            //    }
+            //}
+
+            //// No activities in the queue
+            //return null;
         }
 
         /// <inheritdoc/>
@@ -192,7 +415,14 @@ namespace TranscriptTestRunner.TestClients
         /// <inheritdoc/>
         public override async Task UploadAsync(Stream file, CancellationToken cancellationToken)
         {
-            await _dlClient.Conversations.UploadAsync(_conversation.ConversationId, file, _user, cancellationToken: cancellationToken).ConfigureAwait(false);
+            string url = $"{host}/conversations/{_conversation.ConversationId}/upload?userId={_user}";
+
+            using HttpContent content = new StreamContent(file);
+
+            var response = await _httpClient.PostAsync(url, content).ConfigureAwait(false);
+            var r = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+            //await _dlClient.Conversations.UploadAsync(_conversation.ConversationId, file, _user, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -217,82 +447,6 @@ namespace TranscriptTestRunner.TestClients
             }
 
             _disposed = true;
-        }
-
-        private async Task StartConversationAsync()
-        {
-            var tryCount = 0;
-            var maxTries = _options.StartConversationMaxAttempts;
-            while (tryCount < maxTries && !_activityQueue.Any() && !_futureQueue.Any())
-            {
-                using var startConversationCts = new CancellationTokenSource(_options.StartConversationTimeout);
-                tryCount++;
-                try
-                {
-                    _logger.LogDebug($"{DateTime.Now} Attempting to start conversation (try {tryCount} of {maxTries}).");
-
-                    // Obtain a token using the Direct Line secret
-                    var tokenInfo = await GetDirectLineTokenAsync().ConfigureAwait(false);
-
-                    // Ensure we dispose the client after the retries (this helps us make sure we get a new conversation ID on each try)
-                    _dlClient?.Dispose();
-
-                    // Create directLine client from token and initialize settings.
-                    _dlClient = new DirectLineClient(tokenInfo.Token);
-                    _dlClient.SetRetryPolicy(new RetryPolicy(new HttpStatusCodeErrorDetectionStrategy(), 0));
-
-                    // From now on, we'll add an Origin header in directLine calls, with 
-                    // the trusted origin we sent when acquiring the token as value.
-                    _dlClient.HttpClient.DefaultRequestHeaders.Add(_originHeader.Key, _originHeader.Value);
-
-                    // Start the conversation now (this will send a ConversationUpdate to the bot)
-                    _conversation = await _dlClient.Conversations.StartConversationAsync(startConversationCts.Token).ConfigureAwait(false);
-                    _logger.LogDebug($"{DateTime.Now} Got conversation ID {_conversation.ConversationId} from direct line client.");
-                    _logger.LogTrace($"{DateTime.Now} {Environment.NewLine}{JsonConvert.SerializeObject(_conversation, Formatting.Indented)}");
-
-                    // Ensure we dispose the _webSocketClient after the retries.
-                    //_webSocketClient?.Dispose();
-
-                    // Initialize web socket client and listener
-                    //_webSocketClient = new ClientWebSocket();
-                    //await _webSocketClient.ConnectAsync(new Uri(_conversation.StreamUrl), startConversationCts.Token).ConfigureAwait(false);
-
-                    //_logger.LogDebug($"{DateTime.Now} Connected to websocket, state is {_webSocketClient.State}.");
-
-                    // Block and wait for the first response to come in.
-                    //ActivitySet activitySet = null;
-                    //while (activitySet == null)
-                    //{
-                    //    activitySet = await ReceiveActivityAsync(startConversationCts).ConfigureAwait(false);
-                    //    if (activitySet != null)
-                    //    {
-                    //        ProcessActivitySet(activitySet);
-                    //    }
-                    //    else
-                    //    {
-                    //        _logger.LogDebug($"{DateTime.Now} Got empty ActivitySet while attempting to start the conversation.");
-                    //    }
-                    //}
-                }
-                catch (Exception ex)
-                {
-                    if (tryCount < maxTries)
-                    {
-                        _logger.LogDebug($"{DateTime.Now} Failed to start conversation (attempt {tryCount} of {maxTries}), retrying...{Environment.NewLine}Exception{Environment.NewLine}{ex}");
-                    }
-                    else
-                    {
-                        _logger.LogCritical($"{DateTime.Now} Failed to start conversation after {maxTries} attempts.{Environment.NewLine}Exception{Environment.NewLine}{ex}");
-                        throw;
-                    }
-                }
-            }
-
-            // We have started a conversation and got at least one activity back. 
-            // Start long running background task to read activities from the socket.
-            //_webSocketClientCts = new CancellationTokenSource();
-
-            //_ = Task.Factory.StartNew(() => ListenAsync(_webSocketClientCts), _webSocketClientCts.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
 
         ///// <summary>
@@ -332,6 +486,12 @@ namespace TranscriptTestRunner.TestClients
                 {
                     // Convert the DL Activity object to a BF activity object.
                     var botActivity = JsonConvert.DeserializeObject<BotActivity>(JsonConvert.SerializeObject(dlActivity));
+
+                    if (botActivity.Type == "conversationUpdate" || botActivity.Id == null)
+                    {
+                        continue;
+                    }
+
                     var activityIndex = int.Parse(botActivity.Id.Split('|')[1], CultureInfo.InvariantCulture);
                     if (activityIndex == _lastActivityIndex + 1)
                     {
@@ -342,7 +502,13 @@ namespace TranscriptTestRunner.TestClients
                     {
                         // Activities come out of sequence in some situations. 
                         // put the activity in the future queue so we can process it once we fill in the gaps.
-                        //_futureQueue.Add(activityIndex, botActivity);
+
+                        if (_futureQueue.ContainsKey(activityIndex))
+                        {
+                            continue;
+                        }
+
+                        _futureQueue.Add(activityIndex, botActivity);
                     }
                 }
 
