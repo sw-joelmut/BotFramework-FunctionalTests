@@ -37,7 +37,7 @@ namespace TranscriptTestRunner
         /// <param name="client">Test client to use.</param>
         /// <param name="replyTimeout">The timeout for waiting for replies (in seconds). Default is 180.</param>
         /// <param name="logger">Optional. Instance of <see cref="ILogger"/> to use.</param>
-        public TestRunner(TestClientBase client, int replyTimeout = 180, ILogger logger = null)
+        public TestRunner(TestClientBase client, int replyTimeout = 360, ILogger logger = null)
         {
             _testClient = client;
             _replyTimeout = replyTimeout;
