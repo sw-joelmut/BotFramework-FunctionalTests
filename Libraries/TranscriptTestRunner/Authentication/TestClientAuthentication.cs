@@ -21,11 +21,11 @@ namespace TranscriptTestRunner.Authentication
         /// Initializes a new instance of the <see cref="TestClientAuthentication"/> class.
         /// </summary>
         /// <param name="httpClientListener">.</param>
-        public TestClientAuthentication(HttpClientListener httpClientListener = null)
+        public TestClientAuthentication(HttpClientInvoker httpClientListener = null)
         {
             if (httpClientListener != null)
             {
-                HttpClientListener = httpClientListener;
+                HttpClientInvoker = httpClientListener;
             }
             else
             {
@@ -41,7 +41,7 @@ namespace TranscriptTestRunner.Authentication
                 //      token service -> other services -> auth provider -> token service (post sign in)-> response with token
                 // When we receive the post sign in redirect, we add the cookie passed in the session info
                 // to test enhanced authentication. This in the scenarios happens by itself since browsers do this for us.
-                HttpClientListener = new HttpClientListener(handler);
+                HttpClientInvoker = new HttpClientInvoker(handler);
             }
         }
 
@@ -51,7 +51,7 @@ namespace TranscriptTestRunner.Authentication
         /// <value>
         /// .
         /// </value>
-        public HttpClientListener HttpClientListener { get; }
+        public HttpClientInvoker HttpClientInvoker { get; }
 
         /// <summary>
         /// Signs in to the bot.
@@ -62,11 +62,11 @@ namespace TranscriptTestRunner.Authentication
         /// <returns>True, if SignIn is successful; otherwise false.</returns>
         public async Task<bool> SignInAsync(string url, KeyValuePair<string, string> originHeader, SessionInfo sessionInfo)
         {
-            HttpClientListener.DefaultRequestHeaders.Add(originHeader.Key, originHeader.Value);
+            HttpClientInvoker.DefaultRequestHeaders.Add(originHeader.Key, originHeader.Value);
 
             while (!string.IsNullOrEmpty(url))
             {
-                using var response = await HttpClientListener.GetAsync(new Uri(url)).ConfigureAwait(false);
+                var response = await HttpClientInvoker.GetAsync(new Uri(url)).ConfigureAwait(false);
                 var text = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
                 url = response.StatusCode == HttpStatusCode.Redirect
@@ -91,7 +91,7 @@ namespace TranscriptTestRunner.Authentication
                 if (url.StartsWith("https://token.botframework.com/api/oauth/PostSignInCallback", StringComparison.Ordinal))
                 {
                     url += $"&code_challenge={sessionInfo.SessionId}";
-                    HttpClientListener.Handler.CookieContainer.GetCookies(new Uri(url)).Add(sessionInfo.Cookie);
+                    HttpClientInvoker.Handler.CookieContainer.Add(sessionInfo.Cookie);
                 }
             }
 

@@ -85,7 +85,7 @@ namespace SkillFunctionalTests.SignIn
             Logger.LogInformation(JsonConvert.SerializeObject(testCase, Formatting.Indented));
 
             var options = TestClientOptions[testCase.HostBot];
-            var runner = new XUnitTestRunner(new TestClientFactory(testCase.ChannelId, options, Logger).GetTestClient(), TestRequestTimeout, Logger);
+            var runner = new XUnitTestRunner(new TestClientFactory(testCase.ChannelId, options, Logger, _testFixture.HttpClientInvoker).GetTestClient(), TestRequestTimeout, Logger);
 
             var testParams = new Dictionary<string, string>
             {
@@ -122,7 +122,7 @@ public class TestFixture : IDisposable
     public TestFixture()
     {
         var cookieContainer = new CookieContainer();
-        using var handler = new HttpClientHandler
+        var handler = new HttpClientHandler
         {
             AllowAutoRedirect = false,
             CookieContainer = cookieContainer
@@ -133,13 +133,13 @@ public class TestFixture : IDisposable
         //      token service -> other services -> auth provider -> token service (post sign in)-> response with token
         // When we receive the post sign in redirect, we add the cookie passed in the session info
         // to test enhanced authentication. This in the scenarios happens by itself since browsers do this for us.
-        HttpClientListener = new HttpClientListener(handler);
+        HttpClientInvoker = new HttpClientInvoker(handler);
     }
 
-    public HttpClientListener HttpClientListener { get; }
+    public HttpClientInvoker HttpClientInvoker { get; }
 
     public void Dispose()
     {
-        // throw new NotImplementedException();
+        HttpClientInvoker.Dispose();
     }
 }

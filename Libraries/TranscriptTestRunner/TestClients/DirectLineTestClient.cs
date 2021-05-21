@@ -66,8 +66,8 @@ namespace TranscriptTestRunner.TestClients
         /// </summary>
         /// <param name="options">Options for the client configuration.</param>
         /// <param name="logger">The logger.</param>
-        /// <param name="httpClientListener">The httpClientListener.</param>
-        public DirectLineTestClient(DirectLineTestClientOptions options, HttpClientListener httpClientListener = null, ILogger logger = null)
+        /// <param name="httpClientInvoker">The httpClientListener.</param>
+        public DirectLineTestClient(DirectLineTestClientOptions options,  ILogger logger = null, HttpClientInvoker httpClientInvoker = null)
         {
             if (string.IsNullOrWhiteSpace(options.BotId))
             {
@@ -83,7 +83,7 @@ namespace TranscriptTestRunner.TestClients
 
             _logger = logger ?? NullLogger.Instance;
 
-            _clientAuthentication = new TestClientAuthentication(httpClientListener);
+            _clientAuthentication = new TestClientAuthentication(httpClientInvoker);
         }
 
         /// <inheritdoc/>

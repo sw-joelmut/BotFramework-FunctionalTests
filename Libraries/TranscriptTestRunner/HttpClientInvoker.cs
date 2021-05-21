@@ -8,15 +8,14 @@ namespace TranscriptTestRunner
     /// <remarks>
     /// ..
     /// </remarks>
-    public class HttpClientListener : HttpClient
+    public class HttpClientInvoker : HttpClient
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="HttpClientListener"/> class.
+        /// Initializes a new instance of the <see cref="HttpClientInvoker"/> class.
         /// </summary>
         /// <param name="handler">.</param>
-        /// <param name="disposeHandler">..</param>
-        public HttpClientListener(HttpClientHandler handler, bool disposeHandler = false)
-            : base(handler, disposeHandler)
+        public HttpClientInvoker(HttpClientHandler handler)
+            : base(handler, false)
         {
             Handler = handler;
         }
