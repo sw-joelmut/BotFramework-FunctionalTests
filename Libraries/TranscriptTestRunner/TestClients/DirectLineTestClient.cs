@@ -50,13 +50,13 @@ namespace TranscriptTestRunner.TestClients
         private readonly string _user = $"TestUser-{Guid.NewGuid()}";
         private Conversation _conversation;
 
-        //private CancellationTokenSource _webSocketClientCts;
+        private CancellationTokenSource _webSocketClientCts;
 
         // To detect redundant calls to dispose
         private bool _disposed;
         private DirectLineClient _dlClient;
 
-        //private ClientWebSocket _webSocketClient;
+        private ClientWebSocket _webSocketClient;
         private readonly ILogger _logger;
         private readonly DirectLineTestClientOptions _options;
         private readonly TestClientAuthentication _clientAuthentication;
@@ -141,10 +141,6 @@ namespace TranscriptTestRunner.TestClients
                 await StartConversationAsync().ConfigureAwait(false);
             }
 
-            var activitySet = _dlClient.Conversations.GetActivities(_conversation.ConversationId);
-
-            ProcessActivitySet(activitySet);
-
             // lock the list while work with it.
             lock (_listLock)
             {
@@ -202,9 +198,9 @@ namespace TranscriptTestRunner.TestClients
                 // Dispose managed objects owned by the class here.
                 _dlClient?.Dispose();
 
-                //_webSocketClientCts?.Cancel();
-                //_webSocketClientCts?.Dispose();
-                //_webSocketClient?.Dispose();
+                _webSocketClientCts?.Cancel();
+                _webSocketClientCts?.Dispose();
+                _webSocketClient?.Dispose();
             }
 
             _disposed = true;
@@ -242,28 +238,29 @@ namespace TranscriptTestRunner.TestClients
                     _logger.LogTrace($"{DateTime.Now} {Environment.NewLine}{JsonConvert.SerializeObject(_conversation, Formatting.Indented)}");
 
                     // Ensure we dispose the _webSocketClient after the retries.
-                    //_webSocketClient?.Dispose();
+                    _webSocketClient?.Dispose();
 
-                    // Initialize web socket client and listener
-                    //_webSocketClient = new ClientWebSocket();
-                    //await _webSocketClient.ConnectAsync(new Uri(_conversation.StreamUrl), startConversationCts.Token).ConfigureAwait(false);
+                    //Initialize web socket client and listener
+                    _webSocketClient = new ClientWebSocket();
+                    await _webSocketClient.ConnectAsync(new Uri(_conversation.StreamUrl), startConversationCts.Token).ConfigureAwait(false);
 
-                    //_logger.LogDebug($"{DateTime.Now} Connected to websocket, state is {_webSocketClient.State}.");
+                    _logger.LogDebug($"{DateTime.Now} Connected to websocket, state is {_webSocketClient.State}.");
 
-                    // Block and wait for the first response to come in.
-                    //ActivitySet activitySet = null;
-                    //while (activitySet == null)
-                    //{
-                    //    activitySet = await ReceiveActivityAsync(startConversationCts).ConfigureAwait(false);
-                    //    if (activitySet != null)
-                    //    {
-                    //        ProcessActivitySet(activitySet);
-                    //    }
-                    //    else
-                    //    {
-                    //        _logger.LogDebug($"{DateTime.Now} Got empty ActivitySet while attempting to start the conversation.");
-                    //    }
-                    //}
+                    //Block and wait for the first response to come in.
+
+                    ActivitySet activitySet = null;
+                    while (activitySet == null)
+                    {
+                        activitySet = await ReceiveActivityAsync(startConversationCts).ConfigureAwait(false);
+                        if (activitySet != null)
+                        {
+                            ProcessActivitySet(activitySet);
+                        }
+                        else
+                        {
+                            _logger.LogDebug($"{DateTime.Now} Got empty ActivitySet while attempting to start the conversation.");
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -281,38 +278,38 @@ namespace TranscriptTestRunner.TestClients
 
             // We have started a conversation and got at least one activity back. 
             // Start long running background task to read activities from the socket.
-            //_webSocketClientCts = new CancellationTokenSource();
+            _webSocketClientCts = new CancellationTokenSource();
 
-            //_ = Task.Factory.StartNew(() => ListenAsync(_webSocketClientCts), _webSocketClientCts.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            _ = Task.Factory.StartNew(() => ListenAsync(_webSocketClientCts), _webSocketClientCts.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
 
-        ///// <summary>
-        ///// This method is invoked as a background task and lists to directline websocket.
-        ///// </summary>
-        ///// <param name="cancellationToken">The cancellation token for the operation.</param>
-        //private async Task ListenAsync(CancellationTokenSource cancellationToken)
-        //{
-        //    try
-        //    {
-        //        while (!cancellationToken.IsCancellationRequested)
-        //        {
-        //            //var activitySet = await ReceiveActivityAsync(cancellationToken).ConfigureAwait(false);
-        //            if (activitySet != null)
-        //            {
-        //                ProcessActivitySet(activitySet);
-        //            }
-        //            else
-        //            {
-        //                _logger.LogDebug($"{DateTime.Now} got empty ActivitySet.");
-        //            }
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Error in ListenAsync");
-        //        throw;
-        //    }
-        //}
+        /// <summary>
+        /// This method is invoked as a background task and lists to directline websocket.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token for the operation.</param>
+        private async Task ListenAsync(CancellationTokenSource cancellationToken)
+        {
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    var activitySet = await ReceiveActivityAsync(cancellationToken).ConfigureAwait(false);
+                    if (activitySet != null)
+                    {
+                        ProcessActivitySet(activitySet);
+                    }
+                    else
+                    {
+                        _logger.LogDebug($"{DateTime.Now} got empty ActivitySet.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in ListenAsync");
+                throw;
+            }
+        }
 
         private void ProcessActivitySet(ActivitySet activitySet)
         {
@@ -333,7 +330,7 @@ namespace TranscriptTestRunner.TestClients
                     {
                         // Activities come out of sequence in some situations. 
                         // put the activity in the future queue so we can process it once we fill in the gaps.
-                        //_futureQueue.Add(activityIndex, botActivity);
+                        _futureQueue.Add(activityIndex, botActivity);
                     }
                 }
 
@@ -356,39 +353,39 @@ namespace TranscriptTestRunner.TestClients
             }
         }
 
-        //private async Task<ActivitySet> ReceiveActivityAsync(CancellationTokenSource cancellationToken)
-        //{
-        //    var rcvBytes = new byte[16384];
-        //    var rcvBuffer = new ArraySegment<byte>(rcvBytes);
+        private async Task<ActivitySet> ReceiveActivityAsync(CancellationTokenSource cancellationToken)
+        {
+            var rcvBytes = new byte[16384];
+            var rcvBuffer = new ArraySegment<byte>(rcvBytes);
 
-        //    // Read messages from the socket.
-        //    var rcvMsg = new StringBuilder();
-        //    WebSocketReceiveResult rcvResult;
-        //    do
-        //    {
-        //        _logger.LogDebug($"{DateTime.Now} Listening to web socket....");
+            // Read messages from the socket.
+            var rcvMsg = new StringBuilder();
+            WebSocketReceiveResult rcvResult;
+            do
+            {
+                _logger.LogDebug($"{DateTime.Now} Listening to web socket....");
 
-        //        //rcvResult = await _webSocketClient.ReceiveAsync(rcvBuffer, cancellationToken.Token).ConfigureAwait(false);
-        //        _logger.LogTrace($"{DateTime.Now} Received data from socket.{Environment.NewLine}Buffer offset: {rcvBuffer.Offset}.{Environment.NewLine}Buffer count: {rcvBuffer.Count}{Environment.NewLine}{JsonConvert.SerializeObject(rcvResult, Formatting.Indented)}");
+                rcvResult = await _webSocketClient.ReceiveAsync(rcvBuffer, cancellationToken.Token).ConfigureAwait(false);
+                _logger.LogTrace($"{DateTime.Now} Received data from socket.{Environment.NewLine}Buffer offset: {rcvBuffer.Offset}.{Environment.NewLine}Buffer count: {rcvBuffer.Count}{Environment.NewLine}{JsonConvert.SerializeObject(rcvResult, Formatting.Indented)}");
 
-        //        if (rcvBuffer.Array != null)
-        //        {
-        //            rcvMsg.Append(Encoding.UTF8.GetString(rcvBuffer.Array, rcvBuffer.Offset, rcvResult.Count));
-        //        }
-        //        else
-        //        {
-        //            _logger.LogDebug($"{DateTime.Now} Received data but the array was empty.");
-        //        }
-        //    } 
-        //    while (!rcvResult.EndOfMessage);
+                if (rcvBuffer.Array != null)
+                {
+                    rcvMsg.Append(Encoding.UTF8.GetString(rcvBuffer.Array, rcvBuffer.Offset, rcvResult.Count));
+                }
+                else
+                {
+                    _logger.LogDebug($"{DateTime.Now} Received data but the array was empty.");
+                }
+            }
+            while (!rcvResult.EndOfMessage);
 
-        //    var message = rcvMsg.ToString();
-        //    _logger.LogDebug($"{DateTime.Now} Activity received");
-        //    _logger.LogDebug(message);
+            var message = rcvMsg.ToString();
+            _logger.LogDebug($"{DateTime.Now} Activity received");
+            _logger.LogDebug(message);
 
-        //    var activitySet = JsonConvert.DeserializeObject<ActivitySet>(message);
-        //    return activitySet;
-        //}
+            var activitySet = JsonConvert.DeserializeObject<ActivitySet>(message);
+            return activitySet;
+        }
 
         private void ProcessActivity(BotActivity botActivity, int activitySeq)
         {
